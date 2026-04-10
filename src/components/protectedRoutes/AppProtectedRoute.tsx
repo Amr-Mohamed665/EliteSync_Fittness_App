@@ -6,7 +6,8 @@ import { useAuth } from "@/lib/Cntext/AuthenticationCntext";
 
 function AppProtectedRoute({ children }: RouteProps) {
   const { isLogedIn } = useAuth();
-  const token = localStorage.getItem("token");
+  const match = document.cookie.match(new RegExp('(^| )token=([^;]+)'));
+  const token = match ? match[2] : null;
   
   console.log("AppProtectedRoute - isLogedIn:", isLogedIn, "token exists:", !!token);
   

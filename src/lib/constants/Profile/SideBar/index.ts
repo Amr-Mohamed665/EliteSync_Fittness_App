@@ -8,7 +8,6 @@ import {
   Receipt,
   ShieldCheck,
   Dumbbell,
-  MessageSquare
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -27,11 +26,6 @@ export const menuItems: MenuItem[] = [
     label: "Profile Information",
     path: "/profile/personal-info",
     icon: FileText,
-  },
-  {
-    label: "Messages",
-    path: "/profile/messages",
-    icon: MessageSquare,
   },
   {
     label: "Sessions",

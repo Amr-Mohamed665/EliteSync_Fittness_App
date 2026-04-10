@@ -15,12 +15,13 @@ const AuthenticationCntext = createContext<AuthContextType | undefined>(
 );
 
 export function AuthenticationCntextProvider({ children }: AuthProviderProps) {
-  const [isLogedIn, setIsLogedIn] = useState(
-    localStorage.getItem("token") != null,
-  );
+  // Check if token cookie exists
+  const hasToken = document.cookie.split('; ').find(row => row.startsWith('token=')) !== undefined;
+  
+  const [isLogedIn, setIsLogedIn] = useState<boolean>(hasToken);
 
   const logout = () => {
-    localStorage.removeItem("token");
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     setIsLogedIn(false);
   };
 

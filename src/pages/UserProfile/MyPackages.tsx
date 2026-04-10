@@ -4,6 +4,7 @@ import ProgressBar from "../../components/common/UserProfile/ProgressBar";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getMyPackage } from "@/lib/Api/Authentication/profile";
+import useUserPackage from "@/hooks/useUserPackage";
 
 interface Package {
   id?: number;
@@ -21,6 +22,10 @@ export default function MyPackages() {
     queryKey: ["profile-packages"],
     queryFn: getMyPackage,
   });
+  
+  const { profileOverviewPackageName, isLoading: packageLoading } = useUserPackage();
+
+  console.log("Package status:", pack?.status);
 
   if (isLoading) {
     return (
@@ -60,20 +65,22 @@ export default function MyPackages() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-2xl text-white">
-                  {pack.name || "Package"}
+                  {packageLoading ? "Loading..." : (profileOverviewPackageName || pack.name || "Package")}
                 </span>
                 <span
                   className={`text-sm font-semibold px-2.5 py-0.5 rounded-full ${
-                    pack.status === "Active"
-                      ? "bg-green-500/15 text-green-400"
+                    pack.status === "Active" || !pack.status || pack.status !== "Expired"
+                      ? "bg-green-500 text-white"
                       : "bg-gray-500/15 text-gray-400"
                   }`}>
                   {pack.status || "Active"}
                 </span>
               </div>
-              <span className="text-md text-[#a1a1a1] mt-0.5 block">
-                Expires on {pack.expiryDate || "N/A"}
-              </span>
+              {pack.expiryDate && (
+                <span className="text-md text-[#a1a1a1] mt-0.5 block">
+                  Expires on {pack.expiryDate}
+                </span>
+              )}
             </div>
           </div>
 
@@ -85,13 +92,56 @@ export default function MyPackages() {
           </button>
         </div>
 
-        {/* Progress */}
-        <div className="p-6 border-b border-[#a1a1a1]">
-          <ProgressBar
-            current={pack.sessionsRemaining || 0}
-            total={pack.totalSessions || 1}
-          />
-        </div>
+        {/* Progress - Calculate total based on LAST PAID package from payment history */}
+        {(() => {
+          // Get the last paid package name from useUserPackage hook
+          // Note: profileOverviewPackageName returns formatted names like "Single Session Package"
+          const lastPaidPackageName = (profileOverviewPackageName || "").toLowerCase();
+          const currentPackageName = (pack.name || "").toLowerCase();
+          
+          console.log("DEBUG - profileOverviewPackageName:", profileOverviewPackageName);
+          console.log("DEBUG - lastPaidPackageName:", lastPaidPackageName);
+          console.log("DEBUG - currentPackageName:", currentPackageName);
+          console.log("DEBUG - pack.name:", pack.name);
+          console.log("DEBUG - pack:", pack);
+          
+          let totalSessions = 1;
+          
+          // Determine total based on LAST PAID package (matching formatted names)
+          if (lastPaidPackageName.includes("single session")) {
+            totalSessions = 1;
+          } else if (lastPaidPackageName.includes("premium")) {
+            totalSessions = 50; // Premium = 50 sessions
+          } else if (lastPaidPackageName.includes("monthly")) {
+            totalSessions = 15; // Monthly = 15 sessions
+          } else if (lastPaidPackageName.includes("single")) {
+            // Fallback for any single mention
+            totalSessions = 1;
+          } else {
+            // Fallback to current package name if no payment history
+            const currentPackageName = (pack.name || "").toLowerCase();
+            if (currentPackageName.includes("single")) {
+              totalSessions = 1;
+            } else if (currentPackageName.includes("premium")) {
+              totalSessions = 50;
+            } else if (currentPackageName.includes("monthly")) {
+              totalSessions = 15;
+            }
+          }
+          
+          // If sessionsRemaining is 0 or null but package is Active, 
+          // assume all sessions are available (API data issue)
+          const sessionsRemaining = pack.sessionsRemaining ?? totalSessions;
+          
+          return (
+            <div className="p-6 border-b border-[#a1a1a1]">
+              <ProgressBar
+                current={sessionsRemaining}
+                total={totalSessions}
+              />
+            </div>
+          );
+        })()}
 
         {/* Includes */}
         <div className="p-6">

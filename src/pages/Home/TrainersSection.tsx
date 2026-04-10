@@ -70,7 +70,7 @@ function TrainersSection() {
           </div>
 
           <Link
-            className="w-32 flex items-center justify-center rounded-md border-orange border text-orange text-sm h-9"
+            className="w-32 flex items-center justify-center rounded-md border-orange border !bg-black text-white text-sm h-9"
             to={"/trainers#meet-our-trainers"}
           >
             View All

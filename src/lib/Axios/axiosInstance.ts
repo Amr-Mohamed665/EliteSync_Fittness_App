@@ -8,18 +8,29 @@ const axiosInstance = axios.create({
   },
 });
 
-axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const match = document.cookie.match(new RegExp('(^| )token=([^;]+)'));
+    const token = match ? match[2] : null;
 
-// Handle 401 Unauthorized - auto logout
-axiosInstance.interceptors.response.use(
-  (response) => response,
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
+    return Promise.reject(error);
+  }
+);
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    // Check if the error response has a 401 status code
+    if (error.response && error.response.status === 401) {
+      // Clear token and redirect to login
+      document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       window.location.href = "/login";
     }
     return Promise.reject(error);

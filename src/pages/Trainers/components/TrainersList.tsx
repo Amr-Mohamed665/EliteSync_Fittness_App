@@ -9,23 +9,19 @@ interface TrainersListProps {
 }
 
 function TrainersList({ searchQuery, activeSort, hasUserSorted, activeFilter = "Any" }: TrainersListProps) {
-  const { trainers, loading, error } = useTrainers(searchQuery);
+  const { trainers, loading, error } = useTrainers();
 
   let filteredTrainers = trainers;
 
   if (activeFilter !== "Any") {
     let filterTerms = [activeFilter.toLowerCase()];
-    
-    if (activeFilter === "HIIT") filterTerms = ["crossfit", "cardio & endurance"];
-    if (activeFilter === "Strength") filterTerms = ["muscle gain", "sports performance"];
-    if (activeFilter === "Cardio") filterTerms = ["cardio & endurance", "senior fitness"];
     if (activeFilter === "Nutrition") filterTerms = ["nutrition coaching"];
+    if (activeFilter === "Cardio") filterTerms = ["muscle gain", "flexibility & mobility"];
 
     filteredTrainers = filteredTrainers.filter((trainer) =>
-      trainer.specializations?.some((spec) => {
-        const lowerSpec = spec.toLowerCase();
-        return filterTerms.some(term => lowerSpec.includes(term));
-      })
+      trainer.specializations?.some((spec) =>
+        filterTerms.some((term) => spec.toLowerCase().includes(term))
+      )
     );
   }
 
@@ -48,7 +44,7 @@ function TrainersList({ searchQuery, activeSort, hasUserSorted, activeFilter = "
       const ratingB = parseFloat(String(b.rating ?? 0));
       return ratingB - ratingA;
     }
-    if (activeSort === "Experienced (Highest to Lowest Years of Experience)") {
+    if (activeSort === "Experienced (most to least years of experience  )") {
       return (b.experience_years ?? 0) - (a.experience_years ?? 0);
     }
     if (activeSort === "Price (Lowest to Highest)") {

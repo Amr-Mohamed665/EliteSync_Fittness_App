@@ -1,9 +1,10 @@
 interface ActionButtonProps {
-  text: string;
+  text?: string;
   onClick?: () => void;
   variant?: "primary" | "outline";
   className?: string;
   width?: string;
+  icon?: React.ReactNode;
 }
 
 export default function ActionButton({
@@ -12,6 +13,7 @@ export default function ActionButton({
   variant = "primary",
   className = "",
   width = "w-fit",
+  icon,
 }: ActionButtonProps) {
   const variantClasses =
     variant === "primary"
@@ -21,7 +23,8 @@ export default function ActionButton({
   return (
     <button
       onClick={onClick}
-      className={`${width} px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer ${variantClasses} ${className}`}>
+      className={`${width} px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer ${variantClasses} ${className} flex items-center justify-center gap-2`}>
+      {icon}
       {text}
     </button>
   );

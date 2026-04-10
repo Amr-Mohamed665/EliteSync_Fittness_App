@@ -9,7 +9,7 @@ interface SortPanelProps {
 
 const SortPanel = ({ onClose, onApply, currentSort }: SortPanelProps) => {
   const [activeSort, setActiveSort] = useState(currentSort);
-  const sortOptions = ["Most Popular (Highest to Lowest Rating)", "Experienced (Highest to Lowest Years of Experience)", "Price (Lowest to Highest)", "Price (Highest to Lowest)"];
+  const sortOptions = ["Most Popular (Highest to Lowest Rating)", "Experienced (most to least years of experience  )", "Price (Lowest to Highest)", "Price (Highest to Lowest)"];
 
   const handleApply = () => {
     onApply(activeSort);
@@ -17,29 +17,31 @@ const SortPanel = ({ onClose, onApply, currentSort }: SortPanelProps) => {
   };
 
   const renderLabel = (option: string) => {
-    if (option === "Experienced (Highest to Lowest Years of Experience)") {
+    if (option === "Experienced (most to least years of experience  )") {
       return (
         <>
-          <span className="font-bold text-[22px]">{option.split(" (")[0]}</span>
+          <span className="font-bold">Experienced</span>
           <br />
-          <span className="text-[18px] opacity-80">(Highest to Lowest Years of Experience)</span>
+          <span className="text-sm opacity-80">(most to least</span>
+          <br />
+          <span className="text-sm opacity-80">years of experience)</span>
         </>
       );
     }
     if (option.includes(" (")) {
       return (
         <>
-          <span className="font-bold text-[22px]">{option.split(" (")[0]}</span>
+          <span className="font-bold">{option.split(" (")[0]}</span>
           <br />
-          <span className="text-[18px] opacity-80">({option.split(" (")[1]}</span>
+          <span className="text-sm opacity-80">({option.split(" (")[1]}</span>
         </>
       );
     }
-    return <span className="font-bold text-[22px]">{option}</span>;
+    return <span className="font-bold">{option}</span>;
   };
 
   return (
-    <div className="w-full md:w-[500px] bg-[#111111] absolute top-full mt-4 right-0 z-50 rounded-xl border border-[#3A3A3C] shadow-2xl flex flex-col">
+    <div className="w-full max-w-[600px] bg-[#111111] absolute top-full mt-4 right-0 z-50 rounded-xl border border-[#3A3A3C] shadow-2xl flex flex-col">
       {/* header */}
       <div className="flex justify-between items-center px-8 py-5 border-b border-[#3A3A3C]">
         <h2 className="text-xl font-medium text-white">
@@ -66,7 +68,7 @@ const SortPanel = ({ onClose, onApply, currentSort }: SortPanelProps) => {
                   : "text-gray-300 hover:text-white"
               }`}
             >
-              <span className="text-[22px] leading-snug">
+              <span className="text-[17px]">
                 {renderLabel(option)}
               </span>
               {activeSort === option && (

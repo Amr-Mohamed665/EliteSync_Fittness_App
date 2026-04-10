@@ -40,7 +40,7 @@ export default function WorkoutHistory() {
           <h2 className="text-2xl sm:text-3xl font-bold text-white">Workout History</h2>
           <p className="text-md pl-2 text-[#a1a1a1] mt-1">Your recent training sessions</p>
         </div>
-        <p className="text-[#a1a1a1] text-center py-8">No past sessions yet</p>
+        <p className="text-[#a1a1a1] text-center py-8">No workout history yet</p>
       </div>
     );
   }

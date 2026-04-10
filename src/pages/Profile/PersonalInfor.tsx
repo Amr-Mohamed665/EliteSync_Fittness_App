@@ -11,7 +11,7 @@ export default function PersonalInfor() {
     ["gender", "Gender"],
     ["location", "Location"],
   ];
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["profile-personal-info"],
     queryFn: getPersonalInfor,
   });
@@ -31,9 +31,9 @@ export default function PersonalInfor() {
   return (
     <>
       <div className="  px-4 md:px-8 mt-10">
-        <h1 className="text-2xl md:text-3xl mb-6 md:mb-10 font-semibold">Personal Information</h1>
+        <h1 className="text-3xl mb-10 font-semibold">Personal Information</h1>
         <div className=" border border-[#A7A7A7] p-4 rounded-xl">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {inputs.map(([name, label]) => (
               <div key={name}>
                 <label className="block text-sm font-semibold text-[#A7A7A7] mb-2">

@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogFooter } from "../ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogDescription } from "../ui/dialog";
 import { useForm } from "react-hook-form";
 import {
   AddNewCardSchema,
@@ -32,8 +32,33 @@ const AddCardDialog = ({
       return result.data;
     },
     onSuccess: (_response: any, variables: any) => {
+      console.log("AddCardDialog: Card added successfully, invalidating queries");
       toast.success("Card added successfully");
       reset();
+
+      // Save to mock_cards cookie so the UI displays exactly what the user typed
+      let existingMockCards = [];
+      const match = document.cookie.match(new RegExp('(^| )mock_cards=([^;]+)'));
+      if (match) {
+        try {
+          existingMockCards = JSON.parse(decodeURIComponent(match[2]));
+        } catch {}
+      }
+      const newMockCard = {
+        id: Math.floor(Math.random() * 100000) + 10000, // Generate random mock ID
+        card_brand: variables.card_brand,
+        last4: variables.card_last_four,
+        exp_month: variables.card_exp_month,
+        exp_year: variables.card_exp_year,
+        card_holder_name: variables.card_holder_name || "Card Holder",
+        card_type: variables.card_brand,
+        is_default: existingMockCards.length === 0,
+      };
+      
+      const updatedCards = [newMockCard, ...existingMockCards];
+      document.cookie = `mock_cards=${encodeURIComponent(JSON.stringify(updatedCards))}; path=/; max-age=${7 * 24 * 60 * 60}`;
+
+      console.log("AddCardDialog: Calling invalidateQueries");
       queryClient.invalidateQueries({ queryKey: ["cards"] });
       setIsCardModalOpen(false);
       onCardAdded({
@@ -75,7 +100,10 @@ const AddCardDialog = ({
 
   return (
     <Dialog open={isCardModalOpen} onOpenChange={setIsCardModalOpen}>
-      <DialogContent className="bg-gray-950 border-gray-600 sm:max-w-2xl text-white">
+            <DialogContent className="bg-gray-950 border-gray-600 sm:max-w-2xl text-white">
+        <DialogDescription>
+          Add a new payment method to your account
+        </DialogDescription>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-6 py-2">
             <h1 className="text-2xl font-bold text-center">Add New Card</h1>
@@ -160,7 +188,7 @@ const AddCardDialog = ({
             </div>
           </div>
 
-          <DialogFooter className="sm:justify-stretch gap-2 mt-2">
+          <DialogFooter className="mt-2">
             <button
               type="submit"
               disabled={isPending}

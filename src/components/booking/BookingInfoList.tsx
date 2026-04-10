@@ -5,8 +5,11 @@ const BookingInfoList = ({ details }: { details: BookingDetails }) => {
     { title: "Booking ID", value: details.booking_id || "N/A" },
     { title: "Trainer", value: details.trainerName || "N/A" },
     { title: "Package", value: details.packageTitle || "N/A" },
-    { title: "Date", value: details.date || "N/A" },
-    { title: "Time", value: details.time || "N/A" },
+    { title: "Session Date", value: details.date || "N/A" },
+    { title: "Session Time", value: details.time || "N/A" },
+    { title: "Location", value: details.location || "Online/Gym" },
+    { title: "Payment Date", value: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) },
+    { title: "Amount", value: details.price ? `EGP ${details.price}` : "N/A" },
   ];
 
   return (

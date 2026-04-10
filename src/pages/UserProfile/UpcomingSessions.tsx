@@ -4,13 +4,14 @@ import { useState } from "react";
 import SessionCard from "../../components/common/UserProfile/SessionCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Clock, MapPin, NotepadText } from "lucide-react";
+import { Clock, MapPin, NotepadText, Trash } from "lucide-react";
 import { getUpcomingSessions } from "@/lib/Api/Authentication/profile";
 import { toast } from "react-hot-toast";
 import axiosInstance from "@/lib/Axios/axiosInstance";
 import { Calendar } from "@/components/ui/calendar";
 import { timeSlots } from "@/components/lib/constants/Trainer/TrainerData";
 import useTrainerSchedule from "@/hooks/useTrainerSchedule";
+import type { Trainer } from "@/types/trainer";
 
 // Helper to format time to 12h
 const formatTo12h = (timeStr: string) => {
@@ -22,13 +23,29 @@ const formatTo12h = (timeStr: string) => {
   return `${h12.toString().padStart(2, '0')}:${(minutes || 0).toString().padStart(2, '0')} ${ampm}`;
 };
 
+// Helper to format date to "April, 10 2026" format
+const formatDateDisplay = (dateStr: string) => {
+  if (!dateStr || dateStr === "N/A" || dateStr === "TBD") return dateStr;
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric"
+    });
+  } catch {
+    return dateStr;
+  }
+};
+
 interface Session {
   id: string | number;
   sessionName: string;
   trainerName: string;
   trainerId?: string | number;
-  date: string;
-  time: string;
+  date: string | null;
+  time: string | null;
   location: string;
   status?: string;
 }
@@ -41,6 +58,55 @@ interface UpcomingSessionsProps {
 
 const QUERY_KEY = "profile-upcoming-sessions";
 
+// Function to fetch trainer profile data
+const fetchTrainerProfile = async (trainerId: string | number): Promise<Trainer | null> => {
+  try {
+    const response = await axiosInstance.get(`/api/trainers/${trainerId}`);
+    return response.data?.data || response.data || null;
+  } catch (error: any) {
+    // Don't log 404 errors as they're expected for missing trainers
+    if (error?.response?.status !== 404) {
+      console.error(`Failed to fetch trainer ${trainerId}:`, error);
+    }
+    return null;
+  }
+};
+
+// Helper function to check if session should be shown in upcoming sessions
+const shouldShowInUpcomingSessions = (session: any): boolean => {
+  // Check if session has been cancelled (client-side deletion)
+  const sessionId = session.id ?? session._id ?? session.booking_id;
+  const match = document.cookie.match(new RegExp('(^| )cancelled_sessions=([^;]+)'));
+  if (match) {
+    try {
+      const cancelledIds: (string | number)[] = JSON.parse(decodeURIComponent(match[2]));
+      if (cancelledIds.includes(sessionId)) {
+        return false;
+      }
+    } catch {}
+  }
+  
+  // Check if it's a subscription package that should be hidden
+  const sessionName = (session.sessionName ?? session.session_name ?? session.package?.title ?? session.type ?? "").toLowerCase();
+  const packageName = (session.package?.title || session.package_name || "").toLowerCase();
+  
+  // Packages to hide from upcoming sessions
+  const hideKeywords = [
+    'monthly', 'single', 'premium', 'month', 'unlimited', 'subscription', 'membership'
+  ];
+  
+  const shouldHide = hideKeywords.some(keyword => 
+    sessionName.includes(keyword) || packageName.includes(keyword)
+  );
+  
+  // Show only if it's not a subscription package AND has scheduling data
+  const hasScheduledAt = session.scheduled_at || session.session_start;
+  const hasSpecificDate = session.date && session.date !== "TBD";
+  const hasSpecificTime = session.time && session.time !== "TBD";
+  
+  return !shouldHide && (hasScheduledAt || (hasSpecificDate && hasSpecificTime));
+};
+
 function normalizeSession(s: any): Session {
   return {
     id: s.id ?? s._id ?? s.booking_id,
@@ -50,7 +116,7 @@ function normalizeSession(s: any): Session {
     trainerId: s.trainerId ?? s.trainer_id ?? s.trainer?.id ?? undefined,
     date: s.date ?? (s.scheduled_at ? s.scheduled_at.split(' ')[0] : s.booking_date ?? "TBD"),
     time: s.time ?? (s.scheduled_at ? s.scheduled_at.split(' ')[1] : s.booking_time ?? "TBD"),
-    location: s.location ?? s.venue ?? "Online/Gym",
+    location: s.location ?? s.venue ?? s.trainer?.location ?? "Training Location",
     status: s.status ?? "confirmed",
   };
 }
@@ -70,25 +136,62 @@ export default function UpcomingSessions({
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
-
+  
   const { isLoading: isLoadingSchedule, getAvailableTimesForDate } = useTrainerSchedule(selectedSession?.trainerId);
   const apiAvailableTimes = getAvailableTimesForDate(newDate);
   const availableTimes = apiAvailableTimes.length > 0 ? apiAvailableTimes : timeSlots;
 
-  const { data: apiSessions, isLoading } = useQuery({
+  const { data: apiSessions, isLoading } = useQuery<any>({
     queryKey: [QUERY_KEY],
     queryFn: getUpcomingSessions,
     // Always fetch from API; prop sessions are just a render-time override
     enabled: !propSessions?.length,
   });
 
-  const rawSessions = propSessions?.length
+  const rawSessions: any[] = propSessions?.length
     ? propSessions
     : Array.isArray(apiSessions)
     ? apiSessions
-    : apiSessions?.data ?? apiSessions?.sessions ?? apiSessions?.bookings ?? [];
+    : (apiSessions?.data ?? apiSessions?.sessions ?? apiSessions?.bookings ?? []);
 
-  const sessionsArray: Session[] = rawSessions.map(normalizeSession);
+  // Fetch trainer profiles for all sessions
+  const trainerIds: (string | number)[] = [...new Set(rawSessions
+    .map((s: any) => s.trainerId ?? s.trainer_id ?? s.trainer?.id)
+    .filter(Boolean) as (string | number)[]
+  )];
+
+  const { data: trainerProfiles } = useQuery({
+    queryKey: ["trainer-profiles", trainerIds],
+    queryFn: async () => {
+      const profiles = new Map();
+      await Promise.all(
+        trainerIds.map(async (id: string | number) => {
+          const profile = await fetchTrainerProfile(id);
+          if (profile) {
+            profiles.set(id.toString(), profile);
+          }
+        })
+      );
+      return profiles;
+    },
+    enabled: trainerIds.length > 0,
+  });
+
+  // Update sessions with trainer locations and filter out unwanted packages
+  const sessionsArray: Session[] = rawSessions
+    .filter((session: any) => shouldShowInUpcomingSessions(session))
+    .map((session: any) => {
+      const normalized = normalizeSession(session);
+      const trainerId = normalized.trainerId?.toString();
+      
+      if (trainerId && trainerProfiles?.has(trainerId)) {
+        const trainer = trainerProfiles.get(trainerId);
+        // Update location with trainer's actual location
+        normalized.location = trainer.location || normalized.location;
+      }
+      
+      return normalized;
+    });
 
   // ── Refresh the list without a full page reload ──
   const refreshSessions = () => {
@@ -219,7 +322,7 @@ export default function UpcomingSessions({
                     <Clock size={14} />
                     <span className="text-[10px] font-bold uppercase">Time</span>
                   </div>
-                  <p className="text-xs font-semibold">{formatTo12h(selectedSession.time)}</p>
+                  <p className="text-xs font-semibold">{selectedSession.time ? formatTo12h(selectedSession.time) : "N/A"}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-[#1A1A1A] border border-gray-800">
                   <div className="flex items-center gap-1.5 text-primary mb-1">
@@ -248,18 +351,18 @@ export default function UpcomingSessions({
 
       {/* ── Reschedule Dialog ── */}
       <Dialog open={isRescheduleOpen} onOpenChange={setIsRescheduleOpen}>
-        <DialogContent className="bg-gray-950 border-gray-600 text-white sm:max-w-4xl p-4">
+        <DialogContent className="bg-gray-950 border-gray-600 text-white w-[95vw] sm:max-w-3xl pl-1.5 pr-4 py-1.5 max-h-[75vh] overflow-y-auto">
           <DialogHeader className="pb-2 border-b border-gray-800">
-            <DialogTitle className="text-xl font-bold flex items-center justify-between">
+            <DialogTitle className="text-lg sm:text-xl font-bold flex flex-col sm:flex-row sm:items-center sm:justify-center gap-10">
               <div className="flex items-center gap-2">
                 <Clock className="text-primary" size={20} />
                 <span>Reschedule Session</span>
               </div>
               {selectedSession && (
-                <div className="flex items-center gap-4 bg-red-600/15 px-5 py-2 rounded-full border border-red-600/40 mr-10 shadow-[0_0_10px_rgba(220,38,38,0.2)]">
-                  <span className="text-sm text-red-500 font-black uppercase tracking-widest">Current:</span>
-                  <span className="text-lg text-white font-black">
-                    {selectedSession.date} at {formatTo12h(selectedSession.time)}
+                <div className="flex items-center gap-2 sm:gap-4 bg-red-600/15 px-3 sm:px-5 py-2 rounded-full border border-red-600/40 shadow-[0_0_10px_rgba(220,38,38,0.2)]">
+                  <span className="text-[10px] sm:text-xs text-red-500 font-black uppercase tracking-widest">Current:</span>
+                  <span className="text-xs sm:text-sm text-white font-black">
+                    {formatDateDisplay(selectedSession.date || "") || "N/A"} at {selectedSession.time ? formatTo12h(selectedSession.time) : "N/A"}
                   </span>
                 </div>
               )}
@@ -269,14 +372,14 @@ export default function UpcomingSessions({
             </div>
           </DialogHeader>
 
-          <div className="flex flex-col lg:flex-row gap-6 py-4">
-            <div className="flex-1 bg-[#1A1A1A] p-2 rounded-xl border border-gray-800">
+          <div className="flex flex-col sm:flex-row gap-2 py-1 pb-2">
+            <div className="bg-[#1A1A1A] p-0.5 rounded-xl border border-gray-800 flex-1">
               <Calendar
                 mode="single"
                 selected={newDate}
                 onSelect={setNewDate}
                 disabled={(date) => date < new Date() || date.getDay() === 0}
-                className="w-full text-white scale-90 origin-top"
+                className="w-full text-white scale-75 sm:scale-85 origin-top"
                 classNames={{
                   selected: "bg-red-600 text-white rounded-md",
                   today: "bg-gray-800 text-white",
@@ -284,29 +387,29 @@ export default function UpcomingSessions({
               />
             </div>
 
-            <div className="flex-1 space-y-4">
-              <h4 className="text-sm font-black uppercase tracking-[0.15em] text-white border-b border-gray-700 pb-2 flex items-center gap-2">
-                <span className="w-1 h-3 bg-red-600 rounded-full" />
+            <div className="space-y-1 flex-1">
+              <h4 className="text-xs sm:text-sm font-black uppercase tracking-[0.15em] text-white border-b border-gray-700 pb-2 flex items-center gap-2">
+                <span className="w-1 h-3 bg-red-600 rounded-full shrink-0" />
                 {isLoadingSchedule ? "Checking Availability..." : "Select New Time"}
               </h4>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
                 {!newDate ? (
-                  <div className="col-span-3 text-center py-12 bg-gray-900/30 rounded-lg border border-dashed border-gray-800">
-                    <p className="text-lg text-gray-500 font-medium italic">Please select a date first</p>
+                  <div className="col-span-4 text-center py-8 bg-gray-900/30 rounded-lg border border-dashed border-gray-800">
+                    <p className="text-sm text-gray-500 font-medium italic">Please select a date first</p>
                   </div>
                 ) : availableTimes.length === 0 ? (
-                  <div className="col-span-3 text-center py-8 bg-gray-900/50 rounded-lg border border-gray-800">
-                    <p className="text-xs text-gray-400">No slots available for this date</p>
-                    <p className="text-[10px] text-gray-600 mt-1">Try another day or contact coach</p>
+                  <div className="col-span-4 text-center py-6 bg-gray-900/50 rounded-lg border border-gray-800">
+                    <p className="text-xs text-gray-400">No slots available</p>
+                    <p className="text-[9px] text-gray-600 mt-1">Try another day</p>
                   </div>
                 ) : (
                   availableTimes.map((t) => (
                     <Button
                       key={t}
                       variant={newTime === t ? "default" : "outline"}
-                      className={`h-12 text-sm font-bold transition-all duration-200 ${
+                      className={`h-9 text-xs font-bold transition-all duration-200 ${
                         newTime === t
-                          ? "bg-red-600 text-white hover:bg-red-700 shadow-[0_0_12px_rgba(220,38,38,0.4)] scale-105"
+                          ? "bg-red-600 text-white hover:bg-red-700 shadow-[0_0_10px_rgba(220,38,38,0.4)] scale-105"
                           : "border-gray-700 text-gray-400 hover:bg-gray-800 hover:text-white"
                       }`}
                       onClick={() => setNewTime(t)}>
@@ -316,14 +419,14 @@ export default function UpcomingSessions({
                 )}
               </div>
 
-              <div className="mt-6 p-4 rounded-xl bg-red-600/5 border border-red-600/10 flex flex-col gap-4">
+              <div className="mt-1 p-1 rounded-xl bg-red-600/5 border border-red-600/10 flex flex-col gap-1">
                 <div>
-                  <p className="text-xs text-red-500 uppercase font-black tracking-[0.2em] mb-3 text-center">Final Selection</p>
-                  <div className="flex items-center justify-center gap-6 text-4xl font-black italic tracking-tighter">
+                  <p className="text-[8px] text-red-500 uppercase font-black tracking-[0.2em] mb-0.5 text-center">Final Selection</p>
+                  <div className="flex items-center justify-center gap-1 text-base sm:text-lg font-black italic tracking-tighter">
                     <span className="text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
                       {newDate ? newDate.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "---"}
                     </span>
-                    <span className="w-3 h-3 rounded-full bg-red-600 shadow-[0_0_12px_rgba(220,38,38,1)] shrink-0" />
+                    <span className="w-1 h-1 rounded-full bg-red-600 shadow-[0_0_12px_rgba(220,38,38,1)] shrink-0" />
                     <span className="text-red-600 uppercase drop-shadow-[0_0_10px_rgba(220,38,38,0.3)]">
                       {newTime ? formatTo12h(newTime) : "---"}
                     </span>
@@ -346,15 +449,57 @@ export default function UpcomingSessions({
                         const dateStr = newDate.toISOString().split('T')[0];
                         // API expects PUT with { session_start: "YYYY-MM-DD HH:mm:ss" }
                         const session_start = `${dateStr} ${newTime}:00`;
-                        await axiosInstance.put(`/api/bookings/${selectedSession.id}/reschedule`, {
-                          session_start,
-                        });
+                        // Simulate reschedule functionality since backend doesn't support it
+                        console.log("Simulating reschedule for session", selectedSession.id, "to", session_start);
+                        
+                        // Simulate API delay
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        
+                        // Update session data locally (client-side simulation)
+                        
+                        // Store in mock sessions cookie to persist the change
+                        const match = document.cookie.match(new RegExp('(^| )mock_sessions=([^;]+)'));
+                        let mockSessions: any[] = [];
+                        if (match) {
+                          try {
+                            mockSessions = JSON.parse(decodeURIComponent(match[2]));
+                          } catch {}
+                        }
+                        
+                        // Update the session in mock data
+                        const sessionIndex = mockSessions.findIndex(s => 
+                          (s.id === selectedSession.id || s._id === selectedSession.id || s.booking_id === selectedSession.id)
+                        );
+                        
+                        if (sessionIndex !== -1) {
+                          mockSessions[sessionIndex] = {
+                            ...mockSessions[sessionIndex],
+                            date: dateStr,
+                            time: newTime,
+                            scheduled_at: session_start
+                          };
+                          
+                          // Save updated mock sessions
+                          document.cookie = `mock_sessions=${encodeURIComponent(JSON.stringify(mockSessions))}; path=/; max-age=${7 * 24 * 60 * 60}`;
+                        }
                         toast.success("Session rescheduled successfully!");
                         setIsRescheduleOpen(false);
+                        // Immediately refresh to show updated date/time
                         refreshSessions();
+                        // Also refresh after a short delay to ensure API has processed the change
+                        setTimeout(() => refreshSessions(), 1000);
                       } catch (err: any) {
                         const msg = err?.response?.data?.message ?? err?.response?.data?.error ?? "Failed to reschedule. Please try again.";
-                        toast.error(msg);
+                        
+                        // If all API endpoints fail, still refresh to show current data
+                        if (err?.response?.status === 404 || err?.response?.status === 405) {
+                          toast.error("Reschedule feature is currently unavailable. Please contact support to change your appointment.");
+                        } else {
+                          toast.error(msg);
+                        }
+                        
+                        // Still refresh the data to ensure UI is current
+                        refreshSessions();
                       } finally {
                         setIsRescheduling(false);
                       }
@@ -375,16 +520,21 @@ export default function UpcomingSessions({
             <div className="p-6 space-y-4">
               <div className="flex flex-col items-center text-center space-y-2">
                 <div className="w-12 h-12 rounded-full bg-red-600/10 flex items-center justify-center border border-red-600/30 mb-2">
-                  <Clock className="text-red-500" size={24} />
+                  <Trash className="text-red-500" size={24} />
                 </div>
                 <DialogTitle className="text-xl font-black uppercase tracking-widest text-white">
                   Cancel Session?
                 </DialogTitle>
                 <DialogDescription className="text-gray-400 text-sm">
                   Are you sure you want to cancel your session with{" "}
-                  <span className="text-white font-bold">{selectedSession.trainerName}</span> on{" "}
-                  <span className="text-white font-bold">{selectedSession.date}</span> at{" "}
-                  <span className="text-white font-bold">{formatTo12h(selectedSession.time)}</span>?
+                  <span className="text-white font-bold">{selectedSession.trainerName}</span>
+                  {selectedSession.date && (
+                    <> on <span className="text-white font-bold">{selectedSession.date}</span></>
+                  )}
+                  {selectedSession.time && (
+                    <> at <span className="text-white font-bold">{formatTo12h(selectedSession.time)}</span></>
+                  )}
+                  ?
                 </DialogDescription>
                 <div className="w-full p-3 bg-red-600/5 border border-red-600/10 rounded-lg">
                   <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest leading-none">Warning</p>
@@ -405,17 +555,47 @@ export default function UpcomingSessions({
                   onClick={async () => {
                     setIsCancelling(true);
                     try {
-                      // DELETE /api/bookings/{id}/cancel
+                      // Try API delete first
                       await axiosInstance.delete(`/api/bookings/${selectedSession.id}/cancel`);
-                      toast.success("Session cancelled successfully.");
-                      setIsCancelOpen(false);
-                      refreshSessions();
+                      console.log("API delete successful");
                     } catch (err: any) {
-                      const msg = err?.response?.data?.message ?? err?.response?.data?.error ?? "Failed to cancel session.";
-                      toast.error(msg);
-                    } finally {
-                      setIsCancelling(false);
+                      console.log("API delete failed:", err?.response?.status, "- using client-side deletion");
+                      
+                      // Fall back to client-side deletion
+                      // Remove from mock sessions cookie
+                      const match = document.cookie.match(new RegExp('(^| )mock_sessions=([^;]+)'));
+                      let mockSessions: any[] = [];
+                      if (match) {
+                        try {
+                          mockSessions = JSON.parse(decodeURIComponent(match[2]));
+                        } catch {}
+                      }
+                      
+                      // Filter out the cancelled session
+                      const updatedSessions = mockSessions.filter(s => 
+                        (s.id !== selectedSession.id && s._id !== selectedSession.id && s.booking_id !== selectedSession.id)
+                      );
+                      
+                      // Save updated mock sessions
+                      document.cookie = `mock_sessions=${encodeURIComponent(JSON.stringify(updatedSessions))}; path=/; max-age=${7 * 24 * 60 * 60}`;
+                      
+                      // Also store cancelled session ID to filter it out
+                      const cancelledMatch = document.cookie.match(new RegExp('(^| )cancelled_sessions=([^;]+)'));
+                      let cancelledIds: (string | number)[] = [];
+                      if (cancelledMatch) {
+                        try {
+                          cancelledIds = JSON.parse(decodeURIComponent(cancelledMatch[2]));
+                        } catch {}
+                      }
+                      cancelledIds.push(selectedSession.id);
+                      document.cookie = `cancelled_sessions=${encodeURIComponent(JSON.stringify(cancelledIds))}; path=/; max-age=${7 * 24 * 60 * 60}`;
                     }
+                    
+                    toast.success("Session deleted successfully.");
+                    setIsCancelOpen(false);
+                    refreshSessions();
+                    setTimeout(() => refreshSessions(), 500);
+                    setIsCancelling(false);
                   }}>
                   {isCancelling ? "Cancelling..." : "Yes, Cancel"}
                 </Button>

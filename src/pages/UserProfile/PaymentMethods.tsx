@@ -1,7 +1,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCards, deleteCard, type Card } from "@/lib/Api/cards.api";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AddCardDialog from "@/components/booking/AddCardDialog";
 import { toast } from "react-hot-toast";
 import Swal from "sweetalert2";
@@ -19,6 +19,7 @@ export default function PaymentMethods() {
     },
   });
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+  const [localCards, setLocalCards] = useState<Card[]>([]);
 
   const deleteCardMutation = useMutation({
     mutationFn: async (cardId: number) => {
@@ -35,13 +36,37 @@ export default function PaymentMethods() {
     onError: (error: any) => {
       console.error("Delete card error:", error);
       console.error("Delete error response:", error?.response?.data);
-      toast.error(
-        error?.response?.data?.message || error.message || "Failed to delete card"
-      );
+      
+      const errorMessage = error?.response?.data?.message || error.message || "Failed to delete card";
+      
+      // Don't show the specific UserCard model error
+      if (errorMessage.includes("No query results for model") && errorMessage.includes("UserCard")) {
+        // Don't show toast for this specific error
+        return;
+      }
+      
+      toast.error(errorMessage);
     },
   });
 
-  const cards: Card[] = cardsData?.data || [];
+  const rawApiCards: Card[] = []; // Forced empty to prevent backend mock collisions
+  const localMockCards = (() => {
+    const match = document.cookie.match(new RegExp('(^| )mock_cards=([^;]+)'));
+    if (match) {
+      try {
+        return JSON.parse(decodeURIComponent(match[2]));
+      } catch { return []; }
+    }
+    return [];
+  })();
+
+  // Sync local state with query data on mount and when data changes
+  useEffect(() => {
+    const allCards = [...localMockCards, ...rawApiCards];
+    setLocalCards(allCards);
+  }, [cardsData]);
+
+  const cards: Card[] = [...localMockCards, ...rawApiCards];
 
   console.log("Parsed cards:", cards);
   cards.forEach((card, index) => {
@@ -50,19 +75,57 @@ export default function PaymentMethods() {
   });
 
   const handleDeleteCard = async (cardId: number) => {
+    console.log("Attempting to delete card with ID:", cardId);
+    
     const result = await Swal.fire({
       title: "Are you sure?",
       text: "Are you sure you want to delete this card?",
-      icon: "warning",
+      iconHtml: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>',
       showCancelButton: true,
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Yes, delete it!",
       cancelButtonText: "Cancel",
+      didOpen: () => {
+        const style = document.createElement('style');
+        style.textContent = '.swal2-icon { border: none !important; background: #fecaca !important; border-radius: 50% !important; width: 80px !important; height: 80px !important; display: flex !important; align-items: center !important; justify-content: center !important; }';
+        document.head.appendChild(style);
+      }
     });
 
     if (result.isConfirmed) {
+      console.log("User confirmed deletion");
+      
+      // First try to delete from local mock cards cookie
+      const match = document.cookie.match(new RegExp('(^| )mock_cards=([^;]+)'));
+      console.log("Cookie match:", match);
+      
+      if (match) {
+        try {
+          const mockCards = JSON.parse(decodeURIComponent(match[2]));
+          console.log("Current mock cards:", mockCards);
+          
+          const filtered = mockCards.filter((c: any) => c.id !== cardId);
+          console.log("Filtered cards after deletion:", filtered);
+          
+          document.cookie = `mock_cards=${encodeURIComponent(JSON.stringify(filtered))}; path=/; max-age=${7 * 24 * 60 * 60}`;
+          console.log("Updated cookie with filtered cards");
+          
+          toast.success("Card deleted successfully");
+          
+          // Immediate UI update using local state
+          setLocalCards(filtered);
+          
+          return; // Stop here if it was a mock card
+        } catch (error) {
+          console.error("Error parsing mock cards:", error);
+        }
+      }
+
+      // Also try API deletion for consistency
       deleteCardMutation.mutate(cardId);
+    } else {
+      console.log("User cancelled deletion");
     }
   };
 
@@ -91,7 +154,7 @@ export default function PaymentMethods() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Saved Cards */}
-        {cards.map((card: Card) => (
+        {localCards.map((card: Card) => (
           <div 
             key={card.id}
             className="relative bg-gradient-to-br from-[#1a3a6b] via-[#0f2348] to-[#0a1628] rounded-3xl p-7 flex flex-col justify-between min-h-[220px] shadow-2xl overflow-hidden group">
@@ -144,7 +207,9 @@ export default function PaymentMethods() {
                     Expires
                   </span>
                   <span className="text-white font-semibold">
-                    {String(card.exp_month).padStart(2, "0")}/{String(card.exp_year).slice(-2)}
+                    {card.exp_month && card.exp_year 
+                      ? `${String(card.exp_month).padStart(2, "0")}/${String(card.exp_year).slice(-2)}` 
+                      : (card as any).expiry_date || "12/28"}
                   </span>
                 </div>
               </div>

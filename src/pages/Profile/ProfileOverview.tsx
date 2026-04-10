@@ -28,7 +28,7 @@ const ProfileOverview: React.FC = () => {
       icon: Dumbbell,
     },
   ]);
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["profile-Overview"],
     queryFn: getProfileOverview,
   });
@@ -54,7 +54,7 @@ const ProfileOverview: React.FC = () => {
 
   return (
     <div className=" text-white px-4 md:px-8 ">
-      <h2 className="text-2xl md:text-3xl font-semibold mb-6">
+      <h2 className="text-3xl font-semibold mb-6">
         Profile Overview
       </h2>
       <div className="flex flex-col md:flex-row gap-6 mb-6">
@@ -64,7 +64,7 @@ const ProfileOverview: React.FC = () => {
           className="w-32 md:w-40 rounded-full object-cover"
         />
         <div className="flex flex-col items-start gap-2">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-3">
             <input
             type="file"
             ref={fileInputRef}
@@ -75,19 +75,19 @@ const ProfileOverview: React.FC = () => {
           <button
             onClick={handleUploadClick}
             disabled={isUploading}
-            className="bg-[#FF4D4D] px-6 py-2.5 rounded-md tracking-tight text-xs font-bold hover:bg-black border border-[#FF4D4D] transition disabled:opacity-50"
+            className="bg-[#FF4D4D] px-9 py-2.5 rounded-md tracking-tight text-xs font-bold hover:bg-black border border-[#FF4D4D] transition disabled:opacity-50"
           >
             {isUploading ? "Uploading..." : "Upload New"}
           </button>
           <button
             onClick={handleRemoveClick}
             disabled={isRemoving}
-            className="border border-[#FF4D4D] px-6 py-2.5 rounded-md text-xs font-bold hover:bg-[#FF4D4D] transition disabled:opacity-50"
+            className="border border-[#FF4D4D] px-9 py-2.5 rounded-md text-xs font-bold hover:bg-[#FF4D4D] transition disabled:opacity-50"
           >
             {isRemoving ? "Removing..." : "Remove"}
           </button>
           </div>
-          <p className="text-[#A7A7A7] text-xs">
+          <p className=" text-[#A7A7A7] text-xs">
             JPG, GIF or PNG. Max size of 800K
           </p>
         </div>
@@ -96,15 +96,15 @@ const ProfileOverview: React.FC = () => {
         <h3 className="mb-2 font-semibold text-2xl">
           About Me
         </h3>
-        <p className="text-[#A7A7A7] text-base sm:text-xl leading-6 w-full md:w-4/5">
+        <p className="text-[#A7A7A7] text-xl  leading-6 w-full md:w-4/5">
           {about}
         </p>
       </div>
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 border-b pb-8 border-border/50">
+      <div className="grid md:grid-cols-2 gap-4 border-b pb-5 border-[#A7A7A7]">
         {cards.map((card, index) => (
           <div
             key={index}
-            className="flex flex-col border-l border-[#FF4D4D] rounded-lg px-4 py-8 sm:py-12 text-center justify-center ">
+            className="flex flex-col border-l border-[#FF4D4D] rounded-lg px-4 py-15  text-center justify-center ">
             <div className="flex items-center justify-center mb-2 ">
               <card.icon size={20} className="mr-1" />
               <p className="text-[#FFFFFF] text-2xl">

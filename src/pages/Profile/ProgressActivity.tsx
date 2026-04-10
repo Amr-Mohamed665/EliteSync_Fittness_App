@@ -74,12 +74,13 @@ export default function ProgressActivity() {
 
         <div className="space-y-3">
           {stats.recent_workouts?.map((w: Workout, i: number) => (
-            <div key={i} className="bg-[#2D2D2D] p-4 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div key={i} className="bg-[#2D2D2D] p-4 rounded-xl flex-col md:flex-row items-center">
               <div>
-                <p className="text-base sm:text-lg mb-1">{w.name}</p>
+                <p className="text-lg mb-2">{w.name}</p>
                 <p className="text-[#A7A7A7] text-xs">{w.date}</p>
               </div>
-              <div className="flex gap-4 text-sm sm:text-lg shrink-0">
+
+              <div className="flex gap-4 text-lg">
                 <span>{w.time}</span>
                 <span className="text-red-400">{w.kcal} kcal</span>
               </div>

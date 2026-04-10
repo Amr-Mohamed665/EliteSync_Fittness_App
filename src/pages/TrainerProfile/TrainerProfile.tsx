@@ -6,12 +6,35 @@ import TrainerCertifictions from "@/components/trainer-profile/TrainerCertificti
 import TrainerDescription from "@/components/trainer-profile/TrainerDescription";
 import TrainerInfo from "@/components/trainer-profile/TrainerInfo";
 import TrainingPackages from "@/components/trainer-profile/TrainingPackages";
+import { ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function TrainerProfile() {
   const { id } = useParams();
   const { trainer, loading, error } = useTrainer(id);
+  const [showBubble, setShowBubble] = useState(true);
+  const scheduleRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (scheduleRef.current) {
+        const scheduleTop = scheduleRef.current.getBoundingClientRect().top;
+        const windowHeight = window.innerHeight;
+        // Hide bubble when ScheduleSession is 30% visible in viewport
+        if (scheduleTop < windowHeight * 0.7) {
+          setShowBubble(false);
+        } else {
+          setShowBubble(true);
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll(); // Check initial position
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   if (loading) {
     return (
@@ -71,10 +94,28 @@ export default function TrainerProfile() {
 
   return (
     <>
+      {/* Scroll Down Bubble */}
+      {showBubble && (
+        <div className="fixed right-4 top-1/2 -translate-y-1/2 z-50 hidden md:flex flex-col items-center gap-2 transition-opacity duration-300">
+          <div className="bg-red-500 text-white px-5 py-4 rounded-2xl shadow-[0_0_20px_rgba(239,68,68,0.4)] border border-red-400/50" style={{ animation: 'bounce 5.5s infinite' }}>
+            <p className="text-sm font-black uppercase tracking-wider whitespace-nowrap">
+              Scroll Down
+            </p>
+            <p className="text-sm font-bold text-center mt-2 opacity-90">
+              to Book Session
+            </p>
+            <ChevronDown className="w-6 h-6 mx-auto mt-2 animate-pulse" />
+          </div>
+          <div className="w-1 h-8 bg-gradient-to-b from-red-500 to-transparent rounded-full" />
+        </div>
+      )}
+
       <TrainerInfo trainer={trainer} />
       <TrainerDescription trainer={trainer} />
       <TrainerCertifictions />
-      <ScheduleSession trainerId={trainer.id} />
+      <div ref={scheduleRef}>
+        <ScheduleSession trainerId={trainer.id} />
+      </div>
       <OtherTrainers />
       <TrainingPackages />
     </>

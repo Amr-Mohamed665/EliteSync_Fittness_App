@@ -90,7 +90,7 @@ export async function  SendCompleteProfile(params: CompleteProfileFormData){
 export async function logout() {
   try {
     const { data } = await axiosInstance.post("/api/logout"); // Correcting "logou" typo from postman to "logout"
-    localStorage.removeItem("token");
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     return data;
   } catch (error: any) {
     return error?.response?.data || { status: false, message: "An error occurred" };

@@ -2,7 +2,7 @@ import axiosInstance from "@/lib/Axios/axiosInstance";
 
 export interface Payment {
   id: number;
-  amount: number | string;
+  amount: number;
   currency: string;
   status: 'pending' | 'completed' | 'failed' | 'refunded';
   payment_method: string;
@@ -10,7 +10,6 @@ export interface Payment {
   description: string;
   created_at: string;
   updated_at: string;
-  payment_status?: string; 
 }
 
 export interface PaymentHistoryResponse {
@@ -84,15 +83,6 @@ export interface PayBookingResponse {
     [key: string]: any;
   };
 }
-
-export const confirmBooking = async (
-  bookingId: number | string
-): Promise<{ status: boolean; message: string }> => {
-  const { data } = await axiosInstance.post<{ status: boolean; message: string }>(
-    `/api/bookings/${bookingId}/confirm`
-  );
-  return data;
-};
 
 export const payBooking = async (
   bookingId: number | string,

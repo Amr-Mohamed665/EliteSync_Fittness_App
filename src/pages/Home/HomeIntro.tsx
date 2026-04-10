@@ -32,7 +32,7 @@ function HomeIntro() {
               Book Now
             </Link>
             <Link
-              className=" w-44 flex items-center justify-center rounded-md border-[1px] border-gray-200 h-10 "
+              className=" w-44 flex items-center justify-center rounded-md border-[1px] border-gray-200 !bg-black text-white h-10 "
               to={"/trainers"}
             >
               Meet Our Trainers

@@ -23,7 +23,7 @@ function ChangePassword() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="  px-4 md:px-8 mt-10">
-      <h1 className="text-2xl md:text-3xl mb-6 md:mb-10 font-semibold">Security & Password</h1>
+      <h1 className="text-3xl mb-10 font-semibold">Security & Password</h1>
       <div className=" border border-[#A7A7A7] p-4 rounded-xl flex flex-col items-center gap-3 py-5">
         <h2 className="text-2xl mb-5 ">Change Password</h2>
 

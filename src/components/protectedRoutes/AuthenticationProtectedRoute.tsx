@@ -3,12 +3,12 @@ interface RouteProps {
 }
 
 import { Navigate } from "react-router-dom";
-import { useContext } from "react";
-import AuthenticationCntext from "@/lib/Cntext/AuthenticationCntext";
+import { useAuth } from "@/lib/Cntext/AuthenticationCntext";
 
 function AuthenticationProtectedRoute({ children }: RouteProps) {
-  let { isLogedIn } = useContext(AuthenticationCntext);
-  const token = localStorage.getItem("token");
+  let { isLogedIn } = useAuth();
+  const match = document.cookie.match(new RegExp('(^| )token=([^;]+)'));
+  const token = match ? match[2] : null;
   return isLogedIn || token ? <Navigate to={"/"} /> : children;
 }
 

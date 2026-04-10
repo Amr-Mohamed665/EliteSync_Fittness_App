@@ -3,7 +3,6 @@ import { BiMoney } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
 import type { Trainer } from "@/types/trainer";
 import trainerFallbackImage from "../../assets/img/trainerIMG.png";
-import axiosInstance from "@/lib/Axios/axiosInstance";
 
 type TrainerInfoProps = {
   trainer: Trainer;
@@ -76,52 +75,7 @@ export default function TrainerInfo({ trainer }: TrainerInfoProps) {
               </li>
             </ul>
 
-            <div className="flex flex-col sm:flex-row gap-4 mt-8">
-              <button
-                className="w-full md:w-48 bg-orange hover:bg-[#ff3333] transition-colors text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2"
-                onClick={() => {
-                  // Clear any existing scheduled booking data
-                  sessionStorage.removeItem('scheduledBooking');
-                  navigate(`/booking/${trainer.id}`);
-                }}
-              >
-                Book Now
-              </button>
-
-              <button
-                className="w-full md:w-48 bg-transparent border-2 border-white hover:bg-white hover:text-black transition-colors text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2"
-                onClick={async () => {
-                  try {
-                    // GET existing conversation (read-only); Page will POST to create if needed
-                    const { data } = await axiosInstance.get(`/api/conversations?trainer_id=${trainer.id}`);
-
-                    // Resolve conversation ID from various possible response shapes
-                    const convId =
-                      data?.id ??
-                      data?.conversation?.id ??
-                      data?.conversation_id ??
-                      data?.data?.id ??
-                      (Array.isArray(data) && data[0]?.id) ??
-                      (Array.isArray(data?.data) && data.data[0]?.id) ??
-                      null;
-
-                    if (convId) {
-                      navigate(`/profile/messages/${convId}`);
-                    } else {
-                      // No existing conversation — let Messages page handle creating one
-                      navigate(`/profile/messages?trainer=${trainer.id}`);
-                    }
-                  } catch (err: any) {
-                    console.error("Failed to start conversation", err);
-                    // Fallback: still open messages page so user can send first message
-                    navigate(`/profile/messages?trainer=${trainer.id}`);
-                  }
-                }}
-              >
-                Message Trainer
-              </button>
-            </div>
-          </div>
+                      </div>
         </div>
       </div>
     </>

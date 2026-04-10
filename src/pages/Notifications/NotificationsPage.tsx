@@ -1,76 +1,47 @@
-import { useState, useEffect } from "react"
 import NotificationCard from "@/pages/Notifications/NotificationCard"
 import { CalendarCheck2, CheckCheck, Bell, Loader2 } from "lucide-react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getNotifications, markAsRead, markAllAsRead, deleteNotification, type Notification } from "@/lib/Api/notifications.api"
+import { toast } from "react-hot-toast"
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loading, setLoading] = useState(true)
-  const [unreadCount, setUnreadCount] = useState(0)
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    fetchNotifications()
-  }, [])
+  // 1. Fetch Notifications
+  const { data: response, isLoading } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: getNotifications,
+  })
 
-  const fetchNotifications = async () => {
-    try {
-      setLoading(true)
-      const response = await getNotifications()
-      if (response.status) {
-        setNotifications(response.data)
-        setUnreadCount(response.unread_count || 0)
-      }
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // 2. Mutations for actions
+  const markReadMutation = useMutation({
+    mutationFn: markAsRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] })
+    },
+    onError: () => toast.error("Failed to mark as read")
+  })
 
-  const handleMarkAsRead = async (notificationId: number) => {
-    try {
-      const response = await markAsRead(notificationId)
-      if (response.status) {
-        setNotifications(prev => 
-          prev.map(notif => 
-            notif.id === notificationId ? { ...notif, read: true } : notif
-          )
-        )
-        setUnreadCount(prev => Math.max(0, prev - 1))
-      }
-    } catch (error) {
-      console.error("Failed to mark as read:", error)
-    }
-  }
+  const markAllReadMutation = useMutation({
+    mutationFn: markAllAsRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] })
+      toast.success("All notifications marked as read")
+    },
+    onError: () => toast.error("Failed to mark all as read")
+  })
 
-  const handleMarkAllAsRead = async () => {
-    try {
-      const response = await markAllAsRead()
-      if (response.status) {
-        setNotifications(prev => 
-          prev.map(notif => ({ ...notif, read: true }))
-        )
-        setUnreadCount(0)
-      }
-    } catch (error) {
-      console.error("Failed to mark all as read:", error)
-    }
-  }
+  const deleteMutation = useMutation({
+    mutationFn: deleteNotification,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] })
+      toast.success("Notification deleted")
+    },
+    onError: () => toast.error("Failed to delete notification")
+  })
 
-  const handleDelete = async (notificationId: number) => {
-    try {
-      const response = await deleteNotification(notificationId)
-      if (response.status) {
-        setNotifications(prev => prev.filter(notif => notif.id !== notificationId))
-        const deletedNotif = notifications.find(n => n.id === notificationId)
-        if (deletedNotif && !deletedNotif.read) {
-          setUnreadCount(prev => Math.max(0, prev - 1))
-        }
-      }
-    } catch (error) {
-      console.error("Failed to delete notification:", error)
-    }
-  }
+  const notifications = response?.data || []
+  const unreadCount = response?.unread_count || 0
 
   const todayNotifications = notifications.filter(notif => {
     const notifDate = new Date(notif.created_at)
@@ -110,7 +81,7 @@ export default function NotificationsPage() {
     return date.toLocaleDateString()
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="w-full text-white p-4 md:p-8 flex justify-center items-center min-h-64">
         <Loader2 className="w-8 h-8 animate-spin" />
@@ -131,11 +102,12 @@ export default function NotificationsPage() {
         </div>
         {unreadCount > 0 && (
           <button
-            onClick={handleMarkAllAsRead}
-            className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors"
+            onClick={() => markAllReadMutation.mutate()}
+            disabled={markAllReadMutation.isPending}
+            className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors disabled:opacity-50"
           >
             <CheckCheck className="w-4 h-4" />
-            Mark all as read
+            {markAllReadMutation.isPending ? "Updating..." : "Mark all as read"}
           </button>
         )}
       </div>
@@ -154,8 +126,8 @@ export default function NotificationsPage() {
                 time={formatTime(notification.created_at)}
                 icon={getNotificationIcon(notification.type)}
                 active={!notification.read}
-                onMarkAsRead={() => handleMarkAsRead(notification.id)}
-                onDelete={() => handleDelete(notification.id)}
+                onMarkAsRead={() => markReadMutation.mutate(notification.id)}
+                onDelete={() => deleteMutation.mutate(notification.id)}
               />
             ))}
           </div>
@@ -176,8 +148,8 @@ export default function NotificationsPage() {
                 time={formatTime(notification.created_at)}
                 icon={getNotificationIcon(notification.type)}
                 active={!notification.read}
-                onMarkAsRead={() => handleMarkAsRead(notification.id)}
-                onDelete={() => handleDelete(notification.id)}
+                onMarkAsRead={() => markReadMutation.mutate(notification.id)}
+                onDelete={() => deleteMutation.mutate(notification.id)}
               />
             ))}
           </div>

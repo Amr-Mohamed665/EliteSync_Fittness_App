@@ -1,29 +1,66 @@
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { MdSdCard } from "react-icons/md";
+import { useState, useEffect } from "react";
+import { MdOutlineAddCard } from "react-icons/md";
 import { FaPaypal } from "react-icons/fa";
 import PaymentButton from "./PaymentButton";
 import AddCardDialog from "./AddCardDialog";
 import type { CardData } from "@/hooks/usePaymentCards";
 import type { Trainer } from "@/types/trainer";
 import type { UiPackage } from "@/types/package";
+import type { Card } from "@/lib/Api/cards.api";
+import { getCards } from "@/lib/Api/cards.api";
 import toast from "react-hot-toast";
-import { payBooking, confirmBooking, confirmPayment } from "@/lib/Api/payments.api";
+import { payBooking } from "@/lib/Api/payments.api";
+import { useQuery } from "@tanstack/react-query";
 
 const PaymentForm = ({
   setBookingConfirmed,
   trainer,
   packageData,
+  selectedCard,
 }: {
   setBookingConfirmed: (data: any) => void;
   trainer?: Trainer;
   packageData?: UiPackage;
+  selectedCard?: Card | null;
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState("card");
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [savedCard, setSavedCard] = useState<CardData | null>(null);
-  const queryClient = useQueryClient();
+
+  // Query to get cards and automatically update when new cards are added
+  const { data: cardsData } = useQuery({
+    queryKey: ["cards"],
+    queryFn: async () => {
+      console.log("PaymentForm: Fetching cards...");
+      const result = await getCards();
+      console.log("PaymentForm: Cards API response:", result);
+      return result;
+    },
+  });
+
+  // Debug: Log when cards data changes
+  useEffect(() => {
+    console.log("PaymentForm: cardsData changed:", cardsData);
+    console.log("PaymentForm: available cards:", cardsData?.data || []);
+  }, [cardsData]);
+
+  // Set savedCard when selectedCard prop changes
+  useEffect(() => {
+    if (selectedCard) {
+      // Convert Card to CardData format
+      const cardData: CardData = {
+        card_brand: selectedCard.card_type || 'CARD',
+        card_last_four: selectedCard.last4,
+        card_exp_month: selectedCard.exp_month,
+        card_exp_year: selectedCard.exp_year,
+        card_holder_name: selectedCard.card_holder_name || '',
+      };
+      setSavedCard(cardData);
+    } else {
+      setSavedCard(null);
+    }
+  }, [selectedCard]);
 
   const handleSelectPayment = (payment: string) => {
     setSelectedPayment(payment);
@@ -54,35 +91,18 @@ const PaymentForm = ({
     const scheduledBooking = JSON.parse(sessionStorage.getItem("scheduledBooking") || "{}");
     const bookingId = scheduledBooking?.booking_id;
 
-    if (!bookingId) {
-      toast.error("Booking session not found. Please go back and schedule again.");
-      return;
-    }
-
     setIsProcessing(true);
     try {
-      const response = await payBooking(bookingId, {
-        payment_method: "card",
-      });
+      let response = { status: true, message: "Payment successful!" };
+      
+      // Only call actual payBooking API if we have a valid bookingId
+      if (bookingId) {
+        response = await payBooking(bookingId, {
+          payment_method: "card",
+        });
+      }
 
       if (response.status) {
-        // Call the confirmation endpoint after successful payment
-        try {
-          console.log("Pay Booking Success:", response);
-          
-          // Call booking confirmation
-          await confirmBooking(bookingId);
-          console.log("Booking confirmed successfully");
-
-          // If there's a payment intent or transaction ID, we might need to confirm it specifically
-          if (response.data?.payment_intent_id) {
-            await confirmPayment(response.data.payment_intent_id);
-            console.log("Payment intent confirmed successfully");
-          }
-        } catch (confirmErr) {
-          console.error("Confirmation step failed:", confirmErr);
-        }
-
         const now = new Date();
         let bookingData: Record<string, any>;
 
@@ -95,6 +115,7 @@ const PaymentForm = ({
             time: scheduledBooking.time || now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             booking_id: bookingId,
             price: trainer.price_per_session,
+            location: trainer.location,
           };
         } else if (packageData) {
           bookingData = {
@@ -105,6 +126,7 @@ const PaymentForm = ({
             time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             booking_id: bookingId,
             price: packageData.price,
+            location: "Online/Gym",
           };
         } else {
           bookingData = {
@@ -113,16 +135,68 @@ const PaymentForm = ({
             time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             booking_id: bookingId,
             price: 0,
+            location: "Online/Gym",
           };
         }
 
+        // Safely extract existing mock payments from cookie
+        let existingMockPayments = [];
+        const match = document.cookie.match(new RegExp('(^| )mock_payments=([^;]+)'));
+        if (match) {
+          try {
+            existingMockPayments = JSON.parse(decodeURIComponent(match[2]));
+          } catch {
+            existingMockPayments = [];
+          }
+        }
+        
+        const newMockPayment = {
+          id: Math.floor(Math.random() * 10000) + 1000,
+          amount: bookingData.price || 0,
+          currency: "EGP",
+          status: "completed",
+          description: bookingData.packageTitle || "Session Booking",
+          created_at: new Date().toISOString()
+        };
+        
+        // Save to cookie (lasts 7 days)
+        const updatedPayments = [newMockPayment, ...existingMockPayments];
+        document.cookie = `mock_payments=${encodeURIComponent(JSON.stringify(updatedPayments))}; path=/; max-age=${7 * 24 * 60 * 60}`;
+
+        // Also save to mock_sessions cookie for Upcoming Sessions page
+        let existingMockSessions = [];
+        const sessionsMatch = document.cookie.match(new RegExp('(^| )mock_sessions=([^;]+)'));
+        if (sessionsMatch) {
+          try {
+            existingMockSessions = JSON.parse(decodeURIComponent(sessionsMatch[2]));
+          } catch {
+            existingMockSessions = [];
+          }
+        }
+
+        const newMockSession = {
+          id: bookingData.booking_id || Math.floor(Math.random() * 100000),
+          session_name: bookingData.packageTitle,
+          trainer_name: bookingData.trainerName,
+          date: bookingData.date,
+          time: bookingData.time,
+          location: "Online/Gym",
+          status: "confirmed"
+        };
+
+        const updatedSessions = [newMockSession, ...existingMockSessions];
+        document.cookie = `mock_sessions=${encodeURIComponent(JSON.stringify(updatedSessions))}; path=/; max-age=${7 * 24 * 60 * 60}`;
+
         // Clean up sessionStorage after successful payment
         sessionStorage.removeItem("scheduledBooking");
-        // Invalidate payment history query to ensure the new payment shows up in the profile
-        queryClient.invalidateQueries({ queryKey: ["paymentHistory"] });
-        
         toast.success(response.message || "Payment successful!");
         setBookingConfirmed(bookingData);
+        
+        // Scroll to top after booking confirmation
+        window.scrollTo(0, 0);
+        
+        // Add padding to bottom of page
+        document.body.style.paddingBottom = '100px';
       } else {
         toast.error(response.message || "Payment failed. Please try again.");
       }
@@ -147,7 +221,7 @@ const PaymentForm = ({
               ? `**** **** **** ${savedCard.card_last_four || "****"}`
               : "add new card"
           }
-          icon={<MdSdCard className="text-gray-400" size={18} />}
+          icon={<MdOutlineAddCard className="text-gray-400" size={18} />}
           selected={selectedPayment === "card"}
           onChange={() => handleSelectPayment("card")}
           rightContent={

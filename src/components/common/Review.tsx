@@ -1,4 +1,4 @@
-import { Quote, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, Quote, Star } from "lucide-react";
 import { useState } from "react";
 import type { ReviewInterface } from "@/lib/types/Trainer/TrainerTypes";
 import { formatDate } from "../utils/formateDate";
@@ -9,6 +9,14 @@ interface Props {
 
 function Review({ reviews }: Props) {
   const [current, setCurrent] = useState(0);
+
+  function handlePreviousReviews() {
+    setCurrent((p) => (p - 1 + reviews.length) % reviews.length);
+  }
+
+  function handleNextReviews() {
+    setCurrent((p) => (p + 1) % reviews.length);
+  }
 
   return (
     <div className="mb-12 p-5">
@@ -25,15 +33,47 @@ function Review({ reviews }: Props) {
         </div>
       ) : (
         <div className="flex flex-col md:flex-row gap-6 mx-auto">
+          {/* Left Panel */}
+          <div className="md:w-52 shrink-0 bg-card border border-border rounded-xl p-6 flex flex-col justify-between min-h-65">
+            <div>
+              <Quote size={50} className="rotate-180 text-primary mb-7" />
+              <p className="text-base font-semibold mt-2 leading-snug">
+                What our clients are saying
+              </p>
+            </div>
 
+            <div className="flex items-center gap-2 mt-6">
+              <button
+                onClick={handlePreviousReviews}
+                className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-accent transition-colors"
+              >
+                <ChevronLeft size={14} />
+              </button>
 
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            {(reviews.length <= 3 
-              ? reviews 
-              : [0, 1, 2].map((offset) => reviews[(current + offset) % reviews.length])
-            ).map((r, uniqueIndex) => (
+              <div className="flex gap-1">
+                {reviews.map((_, i) => (
+                  <span
+                    key={i}
+                    className={`h-1 rounded-full transition-all ${
+                      i === current ? "w-6 bg-primary" : "w-2 bg-border"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <button
+                onClick={handleNextReviews}
+                className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-accent transition-colors"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {reviews.map((r) => (
               <div
-                key={`${r.id}-${uniqueIndex}`}
+                key={r.id}
                 className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between"
               >
                 <div>

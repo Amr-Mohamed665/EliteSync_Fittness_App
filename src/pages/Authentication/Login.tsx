@@ -34,7 +34,7 @@ function Login() {
     if (respons.status === true) {
       setLoding(false);
         console.log(respons);
-      localStorage.setItem("token", respons.token);
+      document.cookie = `token=${respons.token}; path=/; max-age=86400`; // 1 day
       setIsLogedIn(true);
 
       if (respons.is_complete_the_profile === 1) {

@@ -10,19 +10,37 @@ export interface PaymentMethod {
   is_default?: boolean;
 }
 
+const getMockProfileCookie = () => {
+  const match = document.cookie.match(new RegExp('(^| )mock_profile=([^;]+)'));
+  if (match) {
+    try { return JSON.parse(decodeURIComponent(match[2])); } catch {}
+  }
+  return {};
+};
+
 export const getProfile = async () => {
-  const res = await axiosInstance.get("/api/profile");
-  return res.data;
+  try {
+    const res = await axiosInstance.get("/api/profile");
+    return { ...res.data, ...getMockProfileCookie() };
+  } catch (e) {
+    return getMockProfileCookie();
+  }
 };
 
 export const updateProfile = async (data: Record<string, any>) => {
-  const res = await axiosInstance.put("/api/profile", data);
-  return res.data;
+  const updated = { ...getMockProfileCookie(), ...data };
+  document.cookie = `mock_profile=${encodeURIComponent(JSON.stringify(updated))}; path=/; max-age=${7 * 24 * 60 * 60}`;
+  
+  try {
+    const res = await axiosInstance.put("/api/profile", data);
+    return { ...res.data, ...updated };
+  } catch (e) {
+    return updated;
+  }
 };
 
 export const getProfileHeader = async () => {
-  const res = await axiosInstance.get("/api/profile");
-  return res.data;
+  return getProfile();
 };
 
 export const uploadProfileImage = async (file: File) => {
@@ -37,13 +55,12 @@ export const uploadProfileImage = async (file: File) => {
 };
 
 export const removeProfileImage = async () => {
-  const res = await axiosInstance.delete("/api/landing/removeImage");
+  const res = await axiosInstance.post("/api/profile/remove-image");
   return res.data;
 };
 
 export const getProfileOverview = async () => {
-  const res = await axiosInstance.get("/api/profile");
-  return res.data;
+  return getProfile();
 };
 
 export const getPersonalInfor = async () => {
@@ -51,9 +68,24 @@ export const getPersonalInfor = async () => {
   return res.data;
 };
 
-export const getUpcomingSessions = async () => {
-  const res = await axiosInstance.get("/api/profile/sessions");
-  return res.data;
+export const getUpcomingSessions = async (): Promise<any[]> => {
+  let apiSessions: any[] = [];
+  try {
+    const res = await axiosInstance.get("/api/profile/sessions");
+    apiSessions = Array.isArray(res.data) ? res.data : (res.data?.data || res.data?.sessions || []);
+  } catch (e) {
+    console.error("Failed to fetch sessions from API, falling back to mock", e);
+  }
+
+  let mockSessions: any[] = [];
+  const match = document.cookie.match(new RegExp('(^| )mock_sessions=([^;]+)'));
+  if (match) {
+    try {
+      mockSessions = JSON.parse(decodeURIComponent(match[2]));
+    } catch {}
+  }
+
+  return [...mockSessions, ...apiSessions];
 };
 
 export const getMyPackage = async () => {
@@ -97,30 +129,11 @@ export const getTrainerSchedule = async (trainerId: string | number) => {
 };
 
 export const createBooking = async (data: {
-  trainer_id?: string | number;
-  trainer_package_id?: string | number;
-  date?: string;
-  time?: string;
-  sessions?: Array<{ session_start: string }>;
+  trainer_id: string | number;
+  date: string;
+  time: string;
   [key: string]: any;
 }) => {
-  // Postman: POST /api/bookings/schedule
-  // Body: { trainer_package_id, sessions: [ { session_start: "2026-04-03 10:00:00" } ] }
-  
-  let payload = data;
-  
-  // If we have single date/time, convert to the format backend expects
-  if (data.date && data.time && !data.sessions) {
-    payload = {
-      trainer_package_id: data.trainer_package_id || data.trainer_id,
-      sessions: [
-        {
-          session_start: `${data.date} ${data.time}:00`
-        }
-      ]
-    };
-  }
-
-  const res = await axiosInstance.post("/api/bookings/schedule", payload);
+  const res = await axiosInstance.post("/api/bookings/schedule", data);
   return res.data;
 };

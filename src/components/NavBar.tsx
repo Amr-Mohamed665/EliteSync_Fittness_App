@@ -34,7 +34,7 @@ function NavBar() {
   }, [openSideBar]);
 
   return (
-    <div className=" bg-gray-950 h-16 flex items-center justify-center border-b border-b-gray-900">
+    <div className=" bg-black h-16 flex items-center justify-center border-b border-b-gray-900">
       <div className="w-[95%] md:w-[85%]  mx-auto px-5 flex items-center justify-between ">
         <Link to="/">
           <h2 className="text-2xl font-bold text-white">

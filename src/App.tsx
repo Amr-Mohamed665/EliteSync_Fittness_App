@@ -28,8 +28,6 @@ import Notifications from "./pages/Notifications/Notifications";
 import Booking from "./pages/Booking/Booking";
 import PackageBooking from "./pages/Booking/PackageBooking";
 
-import Messages from "./pages/UserProfile/Messages";
-
 // Profile Pages
 import ProfileOverview from "./pages/UserProfile/ProfileOverview";
 import PersonalInfoForm from "./pages/UserProfile/PersonalInfoForm";
@@ -63,8 +61,6 @@ function App() {
           { index: true, element: <Navigate to="overview" replace /> },
           { path: "overview", element: <ProfileOverview /> },
           { path: "personal-info", element: <PersonalInfoForm /> },
-          { path: "messages", element: <Messages /> },
-          { path: "messages/:conversationId", element: <Messages /> },
           { path: "sessions", element: <UpcomingSessions /> },
           { path: "packages", element: <MyPackages /> },
           { path: "progress", element: <ProgressActivity /> },

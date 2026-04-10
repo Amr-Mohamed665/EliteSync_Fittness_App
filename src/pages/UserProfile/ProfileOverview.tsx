@@ -7,6 +7,7 @@ import userAvatar from "@/assets/user2.jpg";
 import { useProfileImage } from "@/hooks/useProfileImage";
 import { getProfile } from "@/lib/Api/Authentication/profile";
 import { deleteAccount } from "@/lib/Api/Authentication/Authentication";
+import useUserPackage from "@/hooks/useUserPackage";
 
 interface ProfileData {
   id?: number;
@@ -32,6 +33,8 @@ export default function ProfileOverview() {
     queryKey: ["profile"],
     queryFn: getProfile,
   });
+  
+  const { profileOverviewPackageName, isLoading: packageLoading } = useUserPackage();
 
   const changePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -71,7 +74,7 @@ export default function ProfileOverview() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
+      <div className="pt-8">
         <h2 className="text-2xl font-bold text-foreground">Profile Overview</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Manage your personal information and preferences
@@ -82,7 +85,7 @@ export default function ProfileOverview() {
         name={profileData?.name || "User"}
         member={profileData?.member_since || new Date().getFullYear()}
         sessionComplete={profileData?.sessions_completed || 0}
-        activePackage={profileData?.active_package || "No Package"}
+        activePackage={packageLoading ? "Loading..." : (profileOverviewPackageName || "Premium")}
         nextSession={profileData?.next_session || "N/A"}
         avatarUrl={profileData?.profile_image || userAvatar}
         onAvatarClick={() => !isUploading && uploadInp.current?.click()}

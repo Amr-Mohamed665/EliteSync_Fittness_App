@@ -4,6 +4,12 @@ import type { Trainer } from "@/types/trainer";
 
 import type { UiPackage } from "@/types/package";
 
+import { useState } from "react";
+
+import { CreditCard } from "lucide-react";
+
+import { type Card } from "@/lib/Api/cards.api";
+
 
 
 const PaymentAndConfirm = ({
@@ -31,6 +37,23 @@ const PaymentAndConfirm = ({
   const isTrainerBooking = !!trainer;
 
   const isPackageBooking = !!packageData;
+
+  const [selectedCard, setSelectedCard] = useState<number | null>(null);
+
+  // Get mock cards from cookie (same as PaymentMethods page)
+  const localMockCards = (() => {
+    const match = document.cookie.match(new RegExp('(^| )mock_cards=([^;]+)'));
+    if (match) {
+      try {
+        return JSON.parse(decodeURIComponent(match[2]));
+      } catch { return []; }
+    }
+    return [];
+  })();
+
+  // Force API cards to empty to prevent backend mock collisions (same as PaymentMethods page)
+  const rawApiCards: Card[] = [];
+  const allCards = [...localMockCards, ...rawApiCards];
 
 
 
@@ -152,7 +175,95 @@ const PaymentAndConfirm = ({
 
           <div className="flex flex-col items-center gap-4 justify-center px-4 md:px-24">
 
-            <h2 className="text-2xl font-bold mb-4">Payment Method</h2>
+            <h2 className="text-2xl font-bold mb-4">
+              {selectedCard ? 'Confirm Payment' : 'Payment Method'}
+            </h2>
+
+            {/* Saved Cards inside Confirm Payment */}
+            {allCards.length > 0 && !selectedCard && (
+              <div className="w-full mb-6">
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <CreditCard size={20} />
+                  Saved Cards
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {allCards.map((card: Card) => (
+                    <div
+                      key={card.id}
+                      onClick={() => setSelectedCard(card.id)}
+                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                        selectedCard === card.id
+                          ? 'border-orange bg-orange/10'
+                          : 'border-gray-600 hover:border-gray-500'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center">
+                            <CreditCard size={16} className="text-gray-400" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-white font-medium">
+                                {card.card_type?.toUpperCase() || 'CARD'}
+                              </p>
+                              {card.is_default && (
+                                <span className="text-xs text-orange bg-orange/20 px-2 py-1 rounded">
+                                  Default
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-gray-400 text-sm">
+                              •••• •••• •••• {card.last4}
+                            </p>
+                            {card.card_holder_name && (
+                              <p className="text-gray-400 text-sm">
+                                {card.card_holder_name}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-gray-400 text-sm">
+                        Expires {card.exp_month && card.exp_year 
+                          ? `${String(card.exp_month).padStart(2, "0")}/${String(card.exp_year).slice(-2)}`
+                          : '12/28'
+                        }
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Selected Card Display */}
+            {selectedCard && (
+              <div className="w-full mb-6">
+                <div className="border border-orange rounded-lg p-4 bg-orange/10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center">
+                        <CreditCard size={16} className="text-orange" />
+                      </div>
+                      <div>
+                        <p className="text-white font-medium">
+                          {allCards.find(card => card.id === selectedCard)?.card_type?.toUpperCase() || 'CARD'}
+                        </p>
+                        <p className="text-gray-400 text-sm">
+                          •••• •••• •••• {allCards.find(card => card.id === selectedCard)?.last4}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSelectedCard(null)}
+                      className="text-orange hover:text-orange/80 transition-colors text-sm"
+                    >
+                      Change
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="w-full">
 
@@ -163,6 +274,8 @@ const PaymentAndConfirm = ({
                 trainer={trainer}
 
                 packageData={packageData}
+
+                selectedCard={selectedCard ? allCards.find(card => card.id === selectedCard) : null}
 
               />
 

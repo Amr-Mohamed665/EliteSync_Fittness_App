@@ -10,6 +10,7 @@ export type BookingDetails = {
   date?: string;
   time?: string;
   booking_id?: string | number;
+  location?: string;
   [key: string]: any;
 };
 
@@ -34,20 +35,12 @@ const BookingConfirmed = ({ details }: { details?: BookingDetails }) => {
         <div className="w-full rounded border border-[#999999] bg-gray-950 p-2">
           <BookingInfoList details={details || {}} />
         </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Link
-            to="/"
-            className="flex-1 rounded border border-orange py-2 text-orange cursor-pointer hover:bg-orange/10 transition-colors duration-300 text-center font-bold"
-          >
-            Back To Home
-          </Link>
-          <Link
-            to="/profile/billing"
-            className="flex-1 rounded bg-orange py-2 text-white cursor-pointer hover:scale-102 transition-scale duration-300 text-center font-bold"
-          >
-            View Billing History
-          </Link>
-        </div>
+        <Link
+          to="/"
+          className="w-full rounded bg-orange py-2 text-white cursor-pointer hover:scale-102 transition-scale duration-300 text-center"
+        >
+          Back To Home
+        </Link>
       </div>
     </div>
   );

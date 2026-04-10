@@ -5,6 +5,7 @@ import { LogOut } from "lucide-react";
 import { useAuth } from "@/lib/Cntext/AuthenticationCntext";
 import { useQuery } from "@tanstack/react-query";
 import { getProfile } from "@/lib/Api/Authentication/profile";
+import useUserPackage from "@/hooks/useUserPackage";
 
 function SideBar() {
   const location = useLocation();
@@ -14,6 +15,7 @@ function SideBar() {
     queryKey: ["profile"],
     queryFn: getProfile,
   });
+  const { lastSuccessfulPackage, isLoading: packageLoading } = useUserPackage();
 
   console.log("Sidebar profile data:", profileData);
   console.log("Sidebar profile_image:", profileData?.profile_image);
@@ -24,9 +26,9 @@ function SideBar() {
   };
 
   return (
-    <aside className="w-full flex flex-col shrink-0 bg-black rounded-2xl shadow-2xl overflow-hidden border border-border">
+    <aside className="w-72 hidden lg:flex flex-col shrink-0 rounded-2xl overflow-hidden border border-border bg-card shadow-xl">
       {/* User Header */}
-      <div className="relative bg-[#FF4D4D] px-6 pt-10 pb-8">
+      <div className="relative bg-primary px-6 pt-6 pb-8">
         <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/5 -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-white/5 translate-y-1/2 -translate-x-1/2" />
         <div className="relative z-10 flex items-center gap-4">
@@ -41,18 +43,28 @@ function SideBar() {
             )}
             <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-400 border-2 border-primary rounded-full" />
           </div>
-          <div className="flex flex-col bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-md">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">{isLoading ? "..." : profileData?.name || "User"}</h3>
-            <p className="text-[10px] text-white/90 font-medium">Premium Member</p>
+          <div>
+            <p className="font-bold text-primary-foreground text-base leading-tight">
+              {isLoading ? "..." : profileData?.name || "User"}
+            </p>
+            <span className="text-xs text-primary-foreground/60 mt-0.5 block font-bold">
+              {packageLoading ? (
+                "Loading..."
+              ) : lastSuccessfulPackage ? (
+                lastSuccessfulPackage.packageName
+              ) : (
+                "Premium"
+              )}
+            </span>
           </div>
         </div>
       </div>
 
       <div className="h-4 bg-primary relative">
-        <div className="absolute bottom-0 left-0 right-0 h-4 bg-black rounded-t-2xl" />
+        <div className="absolute bottom-0 left-0 right-0 h-4 bg-card rounded-t-2xl" />
       </div>
 
-      <nav className="flex-1 px-3 pb-3 flex flex-col gap-0.5">
+      <nav className="flex-1 px-3 pb-3 flex flex-col gap-0.5 overflow-y-auto">
         <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground px-3 pt-1 pb-2">
           Menu
         </p>
@@ -62,22 +74,22 @@ function SideBar() {
             <Link
               to={item.path}
               key={item.label}
-              className={`group flex items-center gap-4 px-4 py-4 rounded-2xl text-base font-bold transition-all duration-300 ${
+              className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-2xl shadow-primary/30"
-                  : "text-muted-foreground hover:bg-white/5 hover:text-white"
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}>
               <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 ${
+                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200 ${
                   isActive
                     ? "bg-white/15"
                     : "bg-muted group-hover:bg-background"
                 }`}>
-                <item.icon className="w-5 h-5 transition-transform group-hover:scale-110" />
+                <item.icon className="w-4 h-4" />
               </div>
-              <span className="flex-1 tracking-wide">{item.label}</span>
+              <span className="flex-1">{item.label}</span>
               {isActive && (
-                <div className="w-2 h-2 rounded-full bg-primary-foreground animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground/70" />
               )}
             </Link>
           );
