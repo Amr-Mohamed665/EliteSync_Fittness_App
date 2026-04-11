@@ -228,7 +228,7 @@ export default function UpcomingSessions({
 
   return (
     <div className="flex flex-col gap-6 px-4 sm:px-10">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-row items-center justify-between flex-wrap gap-2 sm:gap-4">
         <h2 className="text-2xl sm:text-4xl font-bold text-white">Upcoming Sessions</h2>
         <Link
           to="/sessions/past"
@@ -292,16 +292,16 @@ export default function UpcomingSessions({
 
           {selectedSession && (
             <div className="space-y-4 py-1 pr-1">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 rounded-lg bg-gray-900 border border-gray-800">
+              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="p-3 rounded-lg bg-gray-900 border border-gray-800 sm:col-span-1">
                   <p className="text-[10px] text-primary font-bold uppercase mb-1">Session Type</p>
                   <p className="text-sm font-bold truncate">{selectedSession.sessionName}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-gray-900 border border-gray-800">
+                <div className="p-3 rounded-lg bg-gray-900 border border-gray-800 sm:col-span-1">
                   <p className="text-[10px] text-primary font-bold uppercase mb-1">Assigned Coach</p>
                   <p className="text-sm font-bold truncate capitalize">{selectedSession.trainerName}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-gray-900/50 border border-dashed border-gray-800 flex flex-col justify-center items-center">
+                <div className="p-3 rounded-lg bg-gray-900/50 border border-dashed border-gray-800 flex flex-col justify-center items-center col-span-1 xs:col-span-2 sm:col-span-1">
                   <span className="text-[10px] text-gray-500 font-bold uppercase">Status</span>
                   <span className="text-xs text-green-500 font-bold uppercase">
                     {selectedSession.status ?? "Confirmed"}
@@ -309,7 +309,7 @@ export default function UpcomingSessions({
                 </div>
               </div>
 
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="p-3 rounded-lg bg-[#1A1A1A] border border-gray-800">
                   <div className="flex items-center gap-1.5 text-primary mb-1">
                     <Clock size={14} />
