@@ -126,7 +126,7 @@ function ProfileLayout() {
   return (
     <div className="mx-auto flex flex-col lg:flex-row max-w-7xl w-full px-4 sm:px-6 lg:px-8 mt-24 mb-24 gap-x-8 relative">
       {/* Desktop Sidebar */}
-      <div className="sticky top-28 h-fit hidden lg:block w-[300px] shrink-0">
+      <div className="sticky top-28 h-fit hidden lg:block w-[250px] shrink-0">
         <SideBar />
       </div>
 
@@ -141,7 +141,7 @@ function ProfileLayout() {
               <span className="text-[11px] font-bold tracking-wider uppercase">Menu</span>
             </button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 pt-12 border-r-border/50 w-[300px] bg-gray-950 overflow-hidden">
+          <SheetContent side="left" className="p-0 pt-12 border-r-border/50 w-[250px] bg-gray-950 overflow-hidden">
             <SheetTitle className="sr-only">Profile Navigation</SheetTitle>
             <SheetDescription className="sr-only">Access your profile sections including personal info, sessions, and packages.</SheetDescription>
             <div className="h-full overflow-y-auto">
