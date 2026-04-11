@@ -8,8 +8,9 @@ const GetInTouchSection = () => {
       <div className="bg-gray-950 rounded-lg py-12 px-6 space-y-8">
         <div className="space-y-2.5">
           <h2 className="text-4xl font-bold text-white">Get In Touch</h2>
-          <p className="text-gray-400 text-2xl capitalize">
-            Questions? Issues? whe're here to hel
+          <p className="text-gray-400 text-2xl">
+            Having Questions or Issues? <br />
+            We are here to help !!!
           </p>
         </div>
         <div className="flex flex-col lg:flex-row gap-12">
