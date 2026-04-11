@@ -9,6 +9,7 @@ import { SendForgotPassword } from "@/lib/Api/Authentication/Authentication";
 import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
+import type { AuthContextType, ForgotPasswordFormData } from "@/lib/types/Authentication";
 
 function ForgotPassword() {
   const { register, handleSubmit, formState } = useForm({
@@ -16,18 +17,22 @@ function ForgotPassword() {
   });
   const [loding, setLoding] = useState(false);
   const navigate = useNavigate()
-  const { setalrtEror } = useOutletContext();
+  const { setalrtEror } = useOutletContext<AuthContextType>();
 
-  async function onSubmit(data) {
+  async function onSubmit(data: ForgotPasswordFormData) {
     setLoding(true);
-    const respons = await SendForgotPassword(data);
+    const respons = await SendForgotPassword(data.email);
     if (respons.status === true) {
       setLoding(false);
       navigate(`/verify/${data.email}/resetPassword`)
     } else {
       setLoding(false);
-      const firstErrorKey = Object.keys(respons.error)[0];
-      setalrtEror(respons.error[firstErrorKey][0]);
+      if (respons.error) {
+        const firstErrorKey = Object.keys(respons.error)[0];
+        setalrtEror(respons.error[firstErrorKey][0]);
+      } else {
+        setalrtEror(respons.message);
+      }
     }
   }
   return (

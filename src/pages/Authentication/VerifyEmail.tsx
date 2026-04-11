@@ -10,16 +10,17 @@ import { useParams } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 import { SendOTP } from "@/lib/Api/Authentication/Authentication";
 import { useOutletContext } from "react-router-dom";
+import type { AuthContextType } from "@/lib/types/Authentication";
 
 function VerifyEmail() {
   const { email, navigateTo } = useParams()
   const [otp, setOtp] = useState("");
   const navigate = useNavigate()
   const [loding, setLoding] = useState(false);
-  const { setalrtEror } = useOutletContext();
+  const { setalrtEror } = useOutletContext<AuthContextType>();
 
   async function Verify() {
-    if (otp.length >= 6) {
+    if (otp.length >= 6 && email) {
       let data = {
         "email": email,
         "code": otp

@@ -37,7 +37,6 @@ import ProgressActivity from "./pages/Profile/ProgressActivity";
 import WorkoutHistory from "./pages/UserProfile/WorkoutHistory";
 import PaymentMethods from "./pages/UserProfile/PaymentMethods";
 import BillingHistory from "./pages/UserProfile/BillingHistory";
-import SecurityPassword from "./pages/UserProfile/SecurityPassword";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {Toaster} from 'react-hot-toast'
@@ -67,7 +66,6 @@ function App() {
           { path: "workout-history", element: <WorkoutHistory /> },
           { path: "payment", element: <PaymentMethods /> },
           { path: "billing", element: <BillingHistory /> },
-          { path: "security", element: <SecurityPassword /> },
         ],
       } ,
       {path : "notifications" , element : <AppProtectedRoute> <Notifications/> </AppProtectedRoute> } ,

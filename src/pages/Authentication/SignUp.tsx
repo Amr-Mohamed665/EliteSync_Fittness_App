@@ -6,20 +6,22 @@ import GoogleIcone from "./icones/proicons_google.png";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-import type { RegisterFormData } from "@/lib/types/Authentication";
+import type { RegisterFormData, AuthContextType } from "@/lib/types/Authentication";
 import "../../index.css";
 import { SendSignUp } from "@/lib/Api/Authentication/Authentication";
 import { useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { useOutletContext } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import { API_BASE_URL } from "@/lib/Axios/axiosInstance";
+import axiosInstance from "@/lib/Axios/axiosInstance";
 
 function SignUp() {
   const [loding, setLoding] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const { setalrtEror } = useOutletContext();
+  const { setalrtEror } = useOutletContext<AuthContextType>();
 
   const { register, handleSubmit, formState } = useForm({
     resolver: zodResolver(registerSchema),
@@ -42,8 +44,12 @@ function SignUp() {
       navigate(`/verify/${data.email}/login`)
     } else {
       setLoding(false);
-      const firstErrorKey = Object.keys(respons.errors)[0];
-      setalrtEror(respons.errors[firstErrorKey][0]);
+      if (respons.errors) {
+        const firstErrorKey = Object.keys(respons.errors)[0];
+        setalrtEror(respons.errors[firstErrorKey][0]);
+      } else {
+        setalrtEror(respons.message);
+      }
     }
   }
 
@@ -156,7 +162,20 @@ function SignUp() {
         <p className="w-fit">Or Sign Up with</p>
         <span className=" border-b border-olive-700 grow"></span>
       </div>
-      <Button className=" w-full bg-input">
+      <Button
+        type="button"
+        className=" w-full bg-input"
+        onClick={async () => {
+          try {
+            const { data } = await axiosInstance.get("/api/auth/google/redirect");
+            if (data.url) {
+              window.location.href = data.url;
+            }
+          } catch (error) {
+            console.error("Google Auth Error:", error);
+          }
+        }}
+      >
         <img src={GoogleIcone} alt="" />
       </Button>
     </form>

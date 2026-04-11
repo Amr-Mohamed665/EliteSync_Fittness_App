@@ -64,15 +64,15 @@ export async function SendOTP(params: {
 }
 
 
-export async function  SendResetPassword(params: ResetPasswordFormData){
+export async function SendResetPassword(params: ResetPasswordFormData) {
   try {
-    const { data } = await axiosInstance.post("/api/reset-password", params);
+    const { data } = await axiosInstance.post("/api/reset-password", null, {
+      params
+    });
     return data;
+  } catch (error: any) {
+    return error?.response?.data || { status: false, message: "An error occurred" };
   }
-  catch (err: any) {
-    return err.response.data;
-  }
-
 }
 
 

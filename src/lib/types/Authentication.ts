@@ -63,9 +63,17 @@ export interface CompleteProfileFormData {
   preferred_training_days: string;
 }
 
+export interface ForgotPasswordFormData {
+  email: string;
+}
+
 export interface ResetPasswordFormData {
   email: string;
   password: string;
   password_confirmation: string;
-  token?: string;
+  code: string;
+}
+
+export interface AuthContextType {
+  setalrtEror: (error: string | null) => void;
 }

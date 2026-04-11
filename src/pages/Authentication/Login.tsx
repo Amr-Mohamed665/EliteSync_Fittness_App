@@ -9,18 +9,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/lib/schemas/loginValidation";
 import { useNavigate } from "react-router-dom";
 import { SendSignIn } from "@/lib/Api/Authentication/Authentication";
-import type { SinInFormData } from "@/lib/types/Authentication";
+import type { SinInFormData, AuthContextType } from "@/lib/types/Authentication";
 import { useOutletContext } from "react-router-dom";
 import { useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/lib/Cntext/AuthenticationCntext";
 import { Eye, EyeOff } from "lucide-react";
+import { API_BASE_URL } from "@/lib/Axios/axiosInstance";
+import axiosInstance from "@/lib/Axios/axiosInstance";
 
 function Login() {
   const { register, handleSubmit, formState } = useForm({
     resolver: zodResolver(loginSchema),
   });
-  const { setalrtEror } = useOutletContext<{ setalrtEror: (error: string | null) => void }>();
+  const { setalrtEror } = useOutletContext<AuthContextType>();
   const navigate = useNavigate();
   const [loding, setLoding] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -135,7 +137,20 @@ function Login() {
         <p className="w-fit">Or Login with</p>
         <span className=" border-b border-olive-700 grow"></span>
       </div>
-      <Button type="button" className=" w-full bg-input">
+      <Button
+        type="button"
+        className=" w-full bg-input"
+        onClick={async () => {
+          try {
+            const { data } = await axiosInstance.get("/api/auth/google/redirect");
+            if (data.url) {
+              window.location.href = data.url;
+            }
+          } catch (error) {
+            console.error("Google Auth Error:", error);
+          }
+        }}
+      >
         <img src={GoogleIcone} alt="" />
       </Button>
     </form>

@@ -118,11 +118,6 @@ export const getWorkoutHistory = async () => {
   return res.data;
 };
 
-export const getChangePassword = async () => {
-  const res = await axiosInstance.get("/api/profile");
-  return res.data;
-};
-
 export const getTrainerSchedule = async (trainerId: string | number) => {
   const res = await axiosInstance.get(`/api/trainers/${trainerId}/schedule`);
   return res.data;

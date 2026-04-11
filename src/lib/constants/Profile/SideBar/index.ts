@@ -57,9 +57,4 @@ export const menuItems: MenuItem[] = [
     path: "/profile/billing",
     icon: Receipt,
   },
-  {
-    label: "Security & Password",
-    path: "/profile/security",
-    icon: ShieldCheck,
-  },
 ];

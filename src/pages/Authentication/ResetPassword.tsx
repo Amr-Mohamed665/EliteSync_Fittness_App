@@ -9,6 +9,8 @@ import { SendResetPassword } from "@/lib/Api/Authentication/Authentication";
 import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
+import { Eye, EyeOff } from "lucide-react";
+import type { AuthContextType, ResetPasswordFormData } from "@/lib/types/Authentication";
 
 function ResetPassword() {
   const { register, handleSubmit, formState } = useForm({
@@ -16,10 +18,13 @@ function ResetPassword() {
   });
   const navigate = useNavigate()
   const [loding, setLoding] = useState(false);
-  const { setalrtEror } = useOutletContext();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { setalrtEror } = useOutletContext<AuthContextType>();
   const { email, code } = useParams()
 
-  async function onSubmit(data) {
+  async function onSubmit(data: Pick<ResetPasswordFormData, "password" | "password_confirmation">) {
+    if (!email || !code) return;
     let prams = {
       email: email,
       code: code,
@@ -50,14 +55,25 @@ function ResetPassword() {
       <h2 className=" text-lg text-gray-400">Please set your new password</h2>
       <div className=" w-full mt-6">
         <h2 className="text-sm text-gray-300 mb-1">New Password</h2>
-        <Input
-          {...register("password")}
-          aria-invalid={!!formState.errors.password}
-          className=" bg-input border-olive-700 border "
-          id="fieldgroup-email"
-          type="password"
-          placeholder="Enter your New Password"
-        />
+        <div className="relative">
+          <Input
+            {...register("password")}
+            aria-invalid={!!formState.errors.password}
+            className=" bg-input border-olive-700 border pr-10"
+            id="reset-password-new"
+            type={showPassword ? "text" : "password"}
+            placeholder="Enter your New Password"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+            tabIndex={-1}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
+        </div>
         {formState.errors.password?.message && (
           <p role="alert" className="text-red-500 text-xs mt-1">
             {formState.errors.password?.message}
@@ -66,14 +82,25 @@ function ResetPassword() {
       </div>
       <div className=" w-full">
         <h2 className="text-sm text-gray-300 mb-1">Re-enter Password</h2>
-        <Input
-          {...register("password_confirmation")}
-          aria-invalid={!!formState.errors.password_confirmation}
-          className=" bg-input border-olive-700 border "
-          id="fieldgroup-email"
-          type="password"
-          placeholder="Re-enter your New Password"
-        />
+        <div className="relative">
+          <Input
+            {...register("password_confirmation")}
+            aria-invalid={!!formState.errors.password_confirmation}
+            className=" bg-input border-olive-700 border pr-10"
+            id="reset-password-confirm"
+            type={showConfirmPassword ? "text" : "password"}
+            placeholder="Re-enter your New Password"
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword((prev) => !prev)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+            tabIndex={-1}
+            aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+          >
+            {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
+        </div>
         {formState.errors.password_confirmation?.message && (
           <p role="alert" className="text-red-500 text-xs mt-1">
             {formState.errors.password_confirmation?.message}
