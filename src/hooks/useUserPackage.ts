@@ -10,6 +10,44 @@ interface UserPackageInfo {
   purchaseDate: string;
 }
 
+export const getRawPackageFeatures = (packageName: string): string[] => {
+  const lowerPackageName = packageName.toLowerCase();
+  
+  if (lowerPackageName.includes('single')) {
+    return [
+      "1 Session Allotted",
+      "Personal Trainer Access",
+      "Full Gym Access",
+      "Basic Progress Tracking",
+      "Pay-per-session flexibility"
+    ];
+  }
+  
+  if (lowerPackageName.includes('monthly')) {
+    return [
+      "15 Sessions Monthly",
+      "Dedicated Personal Coach",
+      "Custom Nutrition Plan Included",
+      "Priority Scheduling Access",
+      "Advanced Progress Tracking"
+    ];
+  }
+  
+  if (lowerPackageName.includes('premium')) {
+    return [
+      "50 Total Sessions Pack",
+      "Dedicated Personal Coach",
+      "Full Session Access Included",
+      "Custom Nutrition Plan Included",
+      "Priority Scheduling Access",
+      "Elite Body Assessment",
+      "24/7 Priority Support"
+    ];
+  }
+  
+  return ["Full Session Access", "Progress Tracking"];
+};
+
 const useUserPackage = () => {
   const { data: packagesData, isLoading: packagesLoading } = useQuery({
     queryKey: ["userPackages"],
@@ -159,6 +197,7 @@ const useUserPackage = () => {
   return {
     lastSuccessfulPackage,
     profileOverviewPackageName: getProfileOverviewPackageName(),
+    packageFeatures: lastSuccessfulPackage ? getRawPackageFeatures(lastSuccessfulPackage.packageName) : null,
     isLoading,
   };
 };

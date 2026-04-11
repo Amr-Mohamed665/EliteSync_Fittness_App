@@ -41,7 +41,7 @@ const ContactInput = ({
         <textarea
           id={id}
           className={cn(
-            "w-full border rounded-lg py-4 px-2 outline-none placeholder:text-sm",
+            "w-full border rounded-lg py-4 px-2 outline-none text-sm md:text-base placeholder:text-sm md:placeholder:text-base",
             error ? "border-red-500" : "border-gray-500",
             className
           )}
@@ -52,7 +52,7 @@ const ContactInput = ({
         <input
           id={id}
           className={cn(
-            "w-full border rounded-lg py-4 px-2 outline-none placeholder:text-sm",
+            "w-full border rounded-lg py-4 px-2 outline-none text-sm md:text-base placeholder:text-sm md:placeholder:text-base",
             error ? "border-red-500" : "border-gray-500",
             className
           )}

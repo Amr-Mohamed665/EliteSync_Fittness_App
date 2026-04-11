@@ -4,7 +4,7 @@ import ProgressBar from "../../components/common/UserProfile/ProgressBar";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getMyPackage } from "@/lib/Api/Authentication/profile";
-import useUserPackage from "@/hooks/useUserPackage";
+import useUserPackage, { getRawPackageFeatures } from "@/hooks/useUserPackage";
 
 interface Package {
   id?: number;
@@ -23,7 +23,7 @@ export default function MyPackages() {
     queryFn: getMyPackage,
   });
   
-  const { profileOverviewPackageName, isLoading: packageLoading } = useUserPackage();
+  const { profileOverviewPackageName, packageFeatures, isLoading: packageLoading } = useUserPackage();
 
   console.log("Package status:", pack?.status);
 
@@ -149,7 +149,7 @@ export default function MyPackages() {
             Package Includes
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-            {pack.includes?.map((feature) => (
+            {(packageFeatures || getRawPackageFeatures(pack.name || "")).map((feature) => (
               <div
                 key={feature}
                 className="flex items-center gap-2.5 text-md text-white">
