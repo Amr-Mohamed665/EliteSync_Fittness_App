@@ -228,7 +228,7 @@ export default function ScheduleSession({ trainerId }: ScheduleSessionProps) {
 
 
             <Button
-              className="bg-primary hover:bg-red-600 px-12 py-6 text-2xl font-bold text-white"
+              className="bg-primary hover:bg-red-600 px-8 py-4 sm:px-10 sm:py-5 md:px-12 md:py-6 text-lg sm:text-xl md:text-2xl font-bold text-white"
               disabled={!date || !selectedTime}
               onClick={handleContinueBooking}>
               { "Continue booking →" }
