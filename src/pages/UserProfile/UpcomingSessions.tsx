@@ -274,16 +274,13 @@ export default function UpcomingSessions({
 
       {/* ── View Details Dialog ── */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="bg-gray-950 border-gray-600 text-white sm:max-w-2xl p-4">
+        <DialogContent className="bg-gray-950 border-gray-600 text-white sm:max-w-2xl p-4 top-[45%] sm:top-[50%]">
           <DialogHeader className="pb-1 border-b border-gray-800">
-            <DialogTitle className="text-lg font-bold flex items-center justify-between">
+            <DialogTitle className="text-lg font-bold flex items-center justify-between pr-8">
               <div className="flex items-center gap-2">
                 <NotepadText className="text-primary" size={18} />
                 <span>Booking Details</span>
               </div>
-              <span className="text-[10px] text-[#a1a1a1] font-mono">
-                #{selectedSession?.id.toString().slice(-6).toUpperCase()}
-              </span>
             </DialogTitle>
             <div className="sr-only">
               <DialogDescription>Detailed information about your upcoming training session.</DialogDescription>
@@ -291,17 +288,17 @@ export default function UpcomingSessions({
           </DialogHeader>
 
           {selectedSession && (
-            <div className="space-y-4 py-1 pr-1">
-              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-3">
-                <div className="p-3 rounded-lg bg-gray-900 border border-gray-800 sm:col-span-1">
-                  <p className="text-[10px] text-primary font-bold uppercase mb-1">Session Type</p>
-                  <p className="text-sm font-bold truncate">{selectedSession.sessionName}</p>
+            <div className="space-y-3 sm:space-y-4 py-1 pr-1">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+                <div className="p-2 sm:p-3 rounded-lg bg-gray-900 border border-gray-800 sm:col-span-1">
+                  <p className="text-[10px] text-primary font-bold uppercase mb-0.5 sm:mb-1">Session Type</p>
+                  <p className="text-xs sm:text-sm font-bold truncate">{selectedSession.sessionName}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-gray-900 border border-gray-800 sm:col-span-1">
-                  <p className="text-[10px] text-primary font-bold uppercase mb-1">Assigned Coach</p>
-                  <p className="text-sm font-bold truncate capitalize">{selectedSession.trainerName}</p>
+                <div className="p-2 sm:p-3 rounded-lg bg-gray-900 border border-gray-800 sm:col-span-1">
+                  <p className="text-[10px] text-primary font-bold uppercase mb-0.5 sm:mb-1">Assigned Coach</p>
+                  <p className="text-xs sm:text-sm font-bold truncate capitalize">{selectedSession.trainerName}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-gray-900/50 border border-dashed border-gray-800 flex flex-col justify-center items-center col-span-1 xs:col-span-2 sm:col-span-1">
+                <div className="py-2 px-3 rounded-lg bg-gray-900/50 border border-dashed border-gray-800 flex flex-row sm:flex-col justify-center items-center gap-2 sm:gap-0 sm:col-span-1">
                   <span className="text-[10px] text-gray-500 font-bold uppercase">Status</span>
                   <span className="text-xs text-green-500 font-bold uppercase">
                     {selectedSession.status ?? "Confirmed"}
@@ -309,30 +306,30 @@ export default function UpcomingSessions({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 rounded-lg bg-[#1A1A1A] border border-gray-800">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                <div className="p-2 sm:p-3 rounded-lg bg-[#1A1A1A] border border-gray-800">
                   <div className="flex items-center gap-1.5 text-primary mb-1">
                     <Clock size={14} />
                     <span className="text-[10px] font-bold uppercase">Date</span>
                   </div>
                   <p className="text-xs font-semibold">{selectedSession.date}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-[#1A1A1A] border border-gray-800">
-                  <div className="flex items-center gap-1.5 text-primary mb-1">
+                <div className="p-2 sm:p-3 rounded-lg bg-[#1A1A1A] border border-gray-800">
+                  <div className="flex items-center gap-1.5 text-primary mb-0.5 sm:mb-1">
                     <Clock size={14} />
                     <span className="text-[10px] font-bold uppercase">Time</span>
                   </div>
                   <p className="text-xs font-semibold">{selectedSession.time ? formatTo12h(selectedSession.time) : "N/A"}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-[#1A1A1A] border border-gray-800">
-                  <div className="flex items-center gap-1.5 text-primary mb-1">
+                <div className="p-2 sm:p-3 rounded-lg bg-[#1A1A1A] border border-gray-800">
+                  <div className="flex items-center gap-1.5 text-primary mb-0.5 sm:mb-1">
                     <MapPin size={14} />
                     <span className="text-[10px] font-bold uppercase">Location</span>
                   </div>
                   <p className="text-xs font-semibold truncate">{selectedSession.location}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-gray-950 border border-gray-800">
-                  <h4 className="text-[10px] text-primary font-bold uppercase mb-1">Quick Note</h4>
+                <div className="p-2 sm:p-3 rounded-lg bg-gray-950 border border-gray-800">
+                  <h4 className="text-[10px] text-primary font-bold uppercase mb-0.5 sm:mb-1">Quick Note</h4>
                   <p className="text-xs text-gray-400 leading-tight">Bring water &amp; towel.</p>
                 </div>
               </div>
