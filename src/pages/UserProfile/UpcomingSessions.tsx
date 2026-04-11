@@ -274,7 +274,7 @@ export default function UpcomingSessions({
 
       {/* ── View Details Dialog ── */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="bg-gray-950 border-gray-600 text-white sm:max-w-2xl p-4 top-[45%] sm:top-[50%]">
+        <DialogContent className="bg-gray-950 border-gray-600 text-white sm:max-w-2xl p-4 top-[55%] sm:top-[55%]">
           <DialogHeader className="pb-1 border-b border-gray-800">
             <DialogTitle className="text-lg font-bold flex items-center justify-between pr-8">
               <div className="flex items-center gap-2">
