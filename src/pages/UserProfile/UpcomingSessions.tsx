@@ -202,7 +202,7 @@ export default function UpcomingSessions({
     return (
       <div className="flex flex-col gap-6 px-4 sm:px-10">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-2xl sm:text-4xl font-bold text-white">Upcoming Sessions</h2>
+          <h2 className="text-2xl sm:text-4xl font-bold text-white">Sessions with Dedicated Coach</h2>
           <div className="animate-pulse h-6 w-32 bg-muted rounded"></div>
         </div>
         <div className="animate-pulse h-24 bg-muted rounded-xl"></div>
@@ -214,7 +214,7 @@ export default function UpcomingSessions({
     return (
       <div className="flex flex-col gap-6 px-4 sm:px-10">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-2xl sm:text-4xl font-bold text-white">Upcoming Sessions</h2>
+          <h2 className="text-2xl sm:text-4xl font-bold text-white">Sessions with Dedicated Coach</h2>
           <Link
             to="/sessions/past"
             className="text-sm sm:text-2xl font-semibold underline text-primary hover:text-primary/80 transition-colors duration-200 shrink-0">
@@ -229,7 +229,7 @@ export default function UpcomingSessions({
   return (
     <div className="flex flex-col gap-6 px-4 sm:px-10">
       <div className="flex flex-row items-center justify-between flex-wrap gap-2 sm:gap-4">
-        <h2 className="text-2xl sm:text-4xl font-bold text-white">Upcoming Sessions</h2>
+        <h2 className="text-2xl sm:text-4xl font-bold text-white">Sessions with Dedicated Coach</h2>
         <Link
           to="/sessions/past"
           className="text-sm sm:text-2xl font-semibold underline text-primary hover:text-primary/80 transition-colors duration-200 shrink-0">

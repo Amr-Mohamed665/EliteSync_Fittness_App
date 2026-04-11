@@ -22,7 +22,10 @@ export default function ActionButton({
       ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/15 hover:shadow-primary/40 hover:-translate-y-0.5"
       : "bg-transparent border border-border text-foreground hover:border-primary hover:text-primary hover:-translate-y-0.5";
 
-  const sizeClasses = size === "sm" ? "px-3 py-3.5 text-xs min-h-[44px]" : "px-5 py-2.5 text-sm min-h-[40px]";
+  const sizeClasses =
+    size === "sm"
+      ? "px-3 py-3.5 text-xs min-h-[44px] md:px-6 md:py-3 md:text-sm md:min-h-[52px]"
+      : "px-5 py-2.5 text-sm min-h-[40px]";
 
   return (
     <button

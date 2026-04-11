@@ -30,29 +30,25 @@ export default function SessionCard({
         </div>
 
         <div className="flex flex-col gap-0.5 sm:gap-1 flex-1 min-w-0">
-          <span className="font-semibold text-white text-base sm:text-xl truncate">
+          <span className="font-semibold text-white text-base sm:text-xl md:text-2xl truncate">
             {sessionName}
           </span>
-          <span className="text-sm text-[#a1a1a1] truncate">
+          <span className="text-sm md:text-base text-[#a1a1a1] truncate">
             with {trainerName}
           </span>
-          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-1.5 sm:gap-3 mt-1.5 sm:mt-1 text-xs sm:text-sm text-[#a1a1a1]">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-1.5 sm:gap-3 mt-1.5 sm:mt-1 text-xs sm:text-sm md:text-base text-[#a1a1a1]">
             {date && (
               <span className="flex items-center gap-1 shrink-0">
-                <NotepadText size={14} />
+                <NotepadText className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 {date}
               </span>
             )}
             {time && (
               <span className="flex items-center gap-1 shrink-0">
-                <Clock size={12} />
+                <Clock className="w-3 h-3 md:w-4 md:h-4" />
                 {time}
               </span>
             )}
-            <span className="flex items-center gap-1 w-full sm:w-auto overflow-hidden">
-              <MapPin size={12} className="shrink-0" />
-              <span className="truncate">{location}</span>
-            </span>
           </div>
         </div>
       </div>
@@ -76,10 +72,10 @@ export default function SessionCard({
         {onCancel && (
           <button
             onClick={onCancel}
-            className="p-3.5 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200 shrink-0 flex items-center justify-center"
+            className="p-3.5 md:p-4 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200 shrink-0 flex items-center justify-center"
             aria-label="Cancel session"
           >
-            <Trash2 size={16} />
+            <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
           </button>
         )}
       </div>

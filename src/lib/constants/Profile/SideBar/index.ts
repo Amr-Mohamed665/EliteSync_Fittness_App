@@ -28,7 +28,7 @@ export const menuItems: MenuItem[] = [
     icon: FileText,
   },
   {
-    label: "Sessions",
+    label: "Coach Sessions",
     path: "/profile/sessions",
     icon: CalendarClock,
   },

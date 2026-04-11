@@ -26,7 +26,7 @@ function SideBar() {
   };
 
   return (
-    <aside className="w-72 hidden lg:flex flex-col shrink-0 rounded-2xl overflow-hidden border border-border bg-card shadow-xl">
+    <aside className="w-full hidden lg:flex flex-col shrink-0 rounded-2xl overflow-hidden border border-border bg-card shadow-xl">
       {/* User Header */}
       <div className="relative bg-primary px-6 pt-6 pb-8">
         <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/5 -translate-y-1/2 translate-x-1/2" />

@@ -69,25 +69,6 @@ export default function ProgressActivity() {
         })}
       </div>
       <LineChartComponent data={stats.chart_data || []} />
-      <div className="border border-[#A7A7A7] rounded-2xl p-6">
-        <h2 className="mb-4 text-2xl">Recent Workout History</h2>
-
-        <div className="space-y-3">
-          {stats.recent_workouts?.map((w: Workout, i: number) => (
-            <div key={i} className="bg-[#2D2D2D] p-4 rounded-xl flex-col md:flex-row items-center">
-              <div>
-                <p className="text-lg mb-2">{w.name}</p>
-                <p className="text-[#A7A7A7] text-xs">{w.date}</p>
-              </div>
-
-              <div className="flex gap-4 text-lg">
-                <span>{w.time}</span>
-                <span className="text-red-400">{w.kcal} kcal</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
